@@ -1,0 +1,21 @@
+# Ignore build output and intermediate files
+bin/
+obj/
+
+# Ignore compiled binaries and debugging symbols
+*.dll
+*.pdb
+
+# Ignore user-specific settings files for Visual Studio / Rider
+*.user
+*.vs/
+.vs/
+*.suo
+.idea/
+
+# Ignore temporary files
+*.tmp
+*.temp
+
+# Ignore NuGet package cache (if applicable)
+# .nuget/
