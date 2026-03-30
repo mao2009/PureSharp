@@ -21,7 +21,7 @@ public class ReferentialTransparencyAnalyzer : DiagnosticAnalyzer
         category: "Purity",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "参照透過なメソッドは静的な可変状態にアクセスしてはなりません。");
+        description: "参照透過なメソッドは静的な可変状態にアクセスしてはなりません.");
 
     /// <summary>RT0002: [PureMethod] でないメソッドの呼び出し</summary>
     public static readonly DiagnosticDescriptor RT0002 = new(
@@ -31,7 +31,7 @@ public class ReferentialTransparencyAnalyzer : DiagnosticAnalyzer
         category: "Purity",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "参照透過なメソッドは、[PureMethod] アトリビュートが付与されたメソッドまたは既知の純粋な標準ライブラリのメソッドのみを呼び出すことができます。");
+        description: "参照透過なメソッドは、[PureMethod] アトリビュートが付与されたメソッドまたは既知の純粋な標準ライブラリのメソッドのみを呼び出すことができます.");
 
     /// <summary>RT0003: I/O 操作</summary>
     public static readonly DiagnosticDescriptor RT0003 = new(
@@ -41,7 +41,7 @@ public class ReferentialTransparencyAnalyzer : DiagnosticAnalyzer
         category: "Purity",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "参照透過なメソッドはロギング、ファイルアクセス、ネットワーク通信などの I/O 操作を行ってはなりません。");
+        description: "参照透過なメソッドはロギング、ファイルアクセス、ネットワーク通信などの I/O 操作を行ってはなりません.");
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>

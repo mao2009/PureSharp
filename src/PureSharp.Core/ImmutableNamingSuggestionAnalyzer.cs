@@ -20,7 +20,7 @@ public class ImmutableNamingSuggestionAnalyzer : DiagnosticAnalyzer
         category: "Naming",
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: "一度も再代入されないローカル変数はアンダースコア (_) で始まる名前にすることで、不変性を明示できます。");
+        description: "一度も再代入されないローカル変数はアンダースコア (_) で始まる名前にすることで、不変性を明示できます.");
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>

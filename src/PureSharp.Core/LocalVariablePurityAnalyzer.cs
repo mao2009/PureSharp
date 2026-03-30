@@ -19,7 +19,7 @@ public class LocalVariablePurityAnalyzer : DiagnosticAnalyzer
         category: "Purity",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "アンダースコア (_) で始まるローカル変数は不変として扱われ、宣言後の再代入は禁止されています。");
+        description: "アンダースコア (_) で始まるローカル変数は不変として扱われ、宣言後の再代入は禁止されています.");
 
     /// <summary>LVP0002: 不変ローカル変数の宣言時初期化の強制</summary>
     public static readonly DiagnosticDescriptor LVP0002 = new(
@@ -29,7 +29,7 @@ public class LocalVariablePurityAnalyzer : DiagnosticAnalyzer
         category: "Purity",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "アンダースコア (_) で始まるローカル変数は不変として扱われ、宣言と同時に初期値を代入する必要があります。");
+        description: "アンダースコア (_) で始まるローカル変数は不変として扱われ、宣言と同時に初期値を代入する必要があります.");
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>

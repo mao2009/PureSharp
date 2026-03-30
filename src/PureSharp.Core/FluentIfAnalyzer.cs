@@ -20,7 +20,7 @@ public class FluentIfAnalyzer : DiagnosticAnalyzer
         category: "FluentIf",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "Fluent.If() で始まるメソッドチェーンは必ず .Else() で終了する必要があります。");
+        description: "Fluent.If() で始まるメソッドチェーンは必ず .Else() で終了する必要があります.");
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>

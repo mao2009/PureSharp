@@ -1,5 +1,4 @@
 <Solution>
   <Project Path="src/PureSharp.Core/PureSharp.Core.csproj" />
-  <Project Path="src/PureSharp.Analyzers/PureSharp.Analyzers.csproj" />
   <Project Path="src/PureSharp.Analyzers.Tests/PureSharp.Analyzers.Tests.csproj" />
 </Solution>
