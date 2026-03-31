@@ -5,7 +5,7 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <PackageId>loach.PureSharp</PackageId>
-    <Version>0.1.1</Version>
+    <Version>0.1.2</Version>
     <Authors>loach</Authors>
     <Description>PureSharp provides C# tools for functional programming safety, enforcing referential transparency and immutability with Roslyn analyzers.</Description>
     <PackageTags>C#, functional, immutability, purity, Roslyn, Analyzer</PackageTags>
