@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PureSharp.Analyzers\PureSharp.Analyzers.csproj" />
+    <ProjectReference Include="..\PureSharp.Core\PureSharp.Core.csproj" />
   </ItemGroup>
 
 </Project>
