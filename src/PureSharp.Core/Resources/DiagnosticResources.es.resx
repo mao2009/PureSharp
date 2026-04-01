@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="RT0001_Title" xml:space="preserve">
+    <value>Acceso a campo estático en [PureMethod]</value>
+  </data>
+  <data name="RT0001_MessageFormat" xml:space="preserve">
+    <value>No se puede acceder al campo estático y no solo de lectura '{1}' dentro del método [PureMethod] '{0}'</value>
+  </data>
+  <data name="RT0001_Description" xml:space="preserve">
+    <value>Los métodos referencialmente transparentes no deben acceder al estado mutable estático.</value>
+  </data>
+  <data name="RT0002_Title" xml:space="preserve">
+    <value>Llamada a método no puro en [PureMethod]</value>
+  </data>
+  <data name="RT0002_MessageFormat" xml:space="preserve">
+    <value>No se puede llamar al método no puro '{1}' dentro del método [PureMethod] '{0}'</value>
+  </data>
+  <data name="RT0002_Description" xml:space="preserve">
+    <value>Los métodos referencialmente transparentes solo pueden llamar a métodos marcados con el atributo [PureMethod] o métodos conocidos de la biblioteca estándar pura.</value>
+  </data>
+  <data name="RT0003_Title" xml:space="preserve">
+    <value>Operación de E/S en [PureMethod]</value>
+  </data>
+  <data name="RT0003_MessageFormat" xml:space="preserve">
+    <value>No se pueden realizar operaciones de E/S dentro del método [PureMethod] '{0}'</value>
+  </data>
+  <data name="RT0003_Description" xml:space="preserve">
+    <value>Los métodos referencialmente transparentes no deben realizar operaciones de E/S como el registro, el acceso a archivos o la comunicación por red.</value>
+  </data>
+  <data name="LVP0001_Title" xml:space="preserve">
+    <value>Reasignación a variable local inmutable prohibida</value>
+  </data>
+  <data name="LVP0001_MessageFormat" xml:space="preserve">
+    <value>No se puede reasignar un valor a la variable local inmutable '{0}'</value>
+  </data>
+  <data name="LVP0001_Description" xml:space="preserve">
+    <value>Las variables locales que comienzan con un guion bajo (_) se tratan como inmutables y se prohíbe la reasignación después de la declaración.</value>
+  </data>
+  <data name="LVP0002_Title" xml:space="preserve">
+    <value>Inicialización obligatoria de variable local inmutable</value>
+  </data>
+  <data name="LVP0002_MessageFormat" xml:space="preserve">
+    <value>La variable local inmutable '{0}' debe inicializarse en el momento de la declaración</value>
+  </data>
+  <data name="LVP0002_Description" xml:space="preserve">
+    <value>Las variables locales que comienzan con un guion bajo (_) se tratan como inmutables y se les debe asignar un valor inicial al declararlas.</value>
+  </data>
+  <data name="LVP0003_Title" xml:space="preserve">
+    <value>Sugerencia para aplicar la convención de nomenclatura para variables locales inmutables</value>
+  </data>
+  <data name="LVP0003_MessageFormat" xml:space="preserve">
+    <value>La variable local '{0}' es efectivamente inmutable. Considere comenzar su nombre con un guion bajo '_'.</value>
+  </data>
+  <data name="LVP0003_Description" xml:space="preserve">
+    <value>Las variables locales que nunca se reasignan pueden mostrar explícitamente su inmutabilidad comenzando su nombre con un guion bajo (_).</value>
+  </data>
+  <data name="FIF0001_Title" xml:space="preserve">
+    <value>Verificación de terminación de la cadena FluentIf</value>
+  </data>
+  <data name="FIF0001_MessageFormat" xml:space="preserve">
+    <value>La cadena FluentIf debe terminarse con '.Else(...)'</value>
+  </data>
+  <data name="FIF0001_Description" xml:space="preserve">
+    <value>Las cadenas de métodos que comienzan con Fluent.If() siempre deben terminar con .Else().</value>
+  </data>
+</root>

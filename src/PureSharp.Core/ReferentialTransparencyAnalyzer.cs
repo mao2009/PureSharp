@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
+using PureSharp.Core;
 
 namespace PureSharp.Analyzers;
 
@@ -16,32 +17,32 @@ public class ReferentialTransparencyAnalyzer : DiagnosticAnalyzer
     /// <summary>RT0001: static かつ非 readonly なフィールドへのアクセス</summary>
     public static readonly DiagnosticDescriptor RT0001 = new(
         id: "RT0001",
-        title: "[PureMethod] メソッド内での静的フィールドアクセス",
-        messageFormat: "[PureMethod] メソッド '{0}' 内で静的かつ非 readonly なフィールド '{1}' にアクセスすることはできません",
+        title: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.RT0001_Title), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
+        messageFormat: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.RT0001_MessageFormat), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
         category: "Purity",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "参照透過なメソッドは静的な可変状態にアクセスしてはなりません.");
+        description: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.RT0001_Description), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)));
 
     /// <summary>RT0002: [PureMethod] でないメソッドの呼び出し</summary>
     public static readonly DiagnosticDescriptor RT0002 = new(
         id: "RT0002",
-        title: "[PureMethod] メソッド内での非純粋メソッド呼び出し",
-        messageFormat: "[PureMethod] メソッド '{0}' 内で純粋でないメソッド '{1}' を呼び出すことはできません",
+        title: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.RT0002_Title), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
+        messageFormat: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.RT0002_MessageFormat), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
         category: "Purity",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "参照透過なメソッドは、[PureMethod] アトリビュートが付与されたメソッドまたは既知の純粋な標準ライブラリのメソッドのみを呼び出すことができます.");
+        description: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.RT0002_Description), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)));
 
     /// <summary>RT0003: I/O 操作</summary>
     public static readonly DiagnosticDescriptor RT0003 = new(
         id: "RT0003",
-        title: "[PureMethod] メソッド内での I/O 操作",
-        messageFormat: "[PureMethod] メソッド '{0}' 内で I/O 操作を行うことはできません",
+        title: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.RT0003_Title), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
+        messageFormat: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.RT0003_MessageFormat), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
         category: "Purity",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "参照透過なメソッドはロギング、ファイルアクセス、ネットワーク通信などの I/O 操作を行ってはなりません.");
+        description: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.RT0003_Description), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)));
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>

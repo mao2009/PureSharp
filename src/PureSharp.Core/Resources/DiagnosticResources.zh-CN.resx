@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="RT0001_Title" xml:space="preserve">
+    <value>[PureMethod] 中的静态字段访问</value>
+  </data>
+  <data name="RT0001_MessageFormat" xml:space="preserve">
+    <value>无法在 [PureMethod] 方法 '{0}' 中访问静态、非只读字段 '{1}'</value>
+  </data>
+  <data name="RT0001_Description" xml:space="preserve">
+    <value>引用透明的方法不得访问静态可变状态。</value>
+  </data>
+  <data name="RT0002_Title" xml:space="preserve">
+    <value>[PureMethod] 中的非纯方法调用</value>
+  </data>
+  <data name="RT0002_MessageFormat" xml:space="preserve">
+    <value>无法在 [PureMethod] 方法 '{0}' 中调用非纯方法 '{1}'</value>
+  </data>
+  <data name="RT0002_Description" xml:space="preserve">
+    <value>引用透明的方法只能调用标记有 [PureMethod] 特性的方法或已知的纯标准库方法。</value>
+  </data>
+  <data name="RT0003_Title" xml:space="preserve">
+    <value>[PureMethod] 中的 I/O 操作</value>
+  </data>
+  <data name="RT0003_MessageFormat" xml:space="preserve">
+    <value>无法在 [PureMethod] 方法 '{0}' 中执行 I/O 操作</value>
+  </data>
+  <data name="RT0003_Description" xml:space="preserve">
+    <value>引用透明的方法不得执行 I/O 操作，如日志记录、文件访问或网络通信。</value>
+  </data>
+  <data name="LVP0001_Title" xml:space="preserve">
+    <value>禁止对不可变局部变量进行重新赋值</value>
+  </data>
+  <data name="LVP0001_MessageFormat" xml:space="preserve">
+    <value>无法对不可变局部变量 '{0}' 重新赋值</value>
+  </data>
+  <data name="LVP0001_Description" xml:space="preserve">
+    <value>以下划线 (_) 开头的局部变量被视为不可变，禁止在声明后重新赋值。</value>
+  </data>
+  <data name="LVP0002_Title" xml:space="preserve">
+    <value>不可变局部变量必须初始化</value>
+  </data>
+  <data name="LVP0002_MessageFormat" xml:space="preserve">
+    <value>不可变局部变量 '{0}' 必须在声明时进行初始化</value>
+  </data>
+  <data name="LVP0002_Description" xml:space="preserve">
+    <value>以下划线 (_) 开头的局部变量被视为不可变，必须在声明时赋予初始值。</value>
+  </data>
+  <data name="LVP0003_Title" xml:space="preserve">
+    <value>建议对不可变局部变量应用命名规范</value>
+  </data>
+  <data name="LVP0003_MessageFormat" xml:space="preserve">
+    <value>局部变量 '{0}' 实际上是不可变的。考虑以斜杠 '_' 开头重命名。</value>
+  </data>
+  <data name="LVP0003_Description" xml:space="preserve">
+    <value>永远不会被重新赋值的局部变量可以通过以斜杠 (_) 开头来显式表示其不可变性。</value>
+  </data>
+  <data name="FIF0001_Title" xml:space="preserve">
+    <value>FluentIf 链终止检查</value>
+  </data>
+  <data name="FIF0001_MessageFormat" xml:space="preserve">
+    <value>FluentIf 链必须以 '.Else(...)' 结尾</value>
+  </data>
+  <data name="FIF0001_Description" xml:space="preserve">
+    <value>以 Fluent.If() 开始的方法链必须始终以 .Else() 结尾。</value>
+  </data>
+</root>

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="RT0001_Title" xml:space="preserve">
+    <value>Aliro al statika kampo en [PureMethod]</value>
+  </data>
+  <data name="RT0001_MessageFormat" xml:space="preserve">
+    <value>Neeblas aliri statikan, ne-nurlegatan kampon '{1}' en [PureMethod] metodo '{0}'</value>
+  </data>
+  <data name="RT0001_Description" xml:space="preserve">
+    <value>Reference travideblaj metodoj ne devas aliri statikan muteblan staton.</value>
+  </data>
+  <data name="RT0002_Title" xml:space="preserve">
+    <value>Voko de ne-pura metodo en [PureMethod]</value>
+  </data>
+  <data name="RT0002_MessageFormat" xml:space="preserve">
+    <value>Neeblas voki ne-puran metodon '{1}' en [PureMethod] metodo '{0}'</value>
+  </data>
+  <data name="RT0002_Description" xml:space="preserve">
+    <value>Reference travideblaj metodoj povas voki nur metodojn markitajn per la atributo [PureMethod] aŭ konatajn purajn metodojn de la norma biblioteko.</value>
+  </data>
+  <data name="RT0003_Title" xml:space="preserve">
+    <value>Eneliga (I/O) operacio en [PureMethod]</value>
+  </data>
+  <data name="RT0003_MessageFormat" xml:space="preserve">
+    <value>Neeblas fari eneligajn operaciojn en [PureMethod] metodo '{0}'</value>
+  </data>
+  <data name="RT0003_Description" xml:space="preserve">
+    <value>Reference travideblaj metodoj ne devas fari eneligajn operaciojn kiel protokoladon, dosieraliron, aŭ retan komunikadon.</value>
+  </data>
+  <data name="LVP0001_Title" xml:space="preserve">
+    <value>Reatribuo al neŝanĝebla loka variablo estas malpermesita</value>
+  </data>
+  <data name="LVP0001_MessageFormat" xml:space="preserve">
+    <value>Neeblas reatribui valoron al neŝanĝebla loka variablo '{0}'</value>
+  </data>
+  <data name="LVP0001_Description" xml:space="preserve">
+    <value>Lokaj variabloj komenciĝantaj per substreko (_) estas traktataj kiel neŝanĝeblaj, kaj reatribuo post deklaro estas malpermesita.</value>
+  </data>
+  <data name="LVP0002_Title" xml:space="preserve">
+    <value>Deviga pravalorizo de neŝanĝebla loka variablo</value>
+  </data>
+  <data name="LVP0002_MessageFormat" xml:space="preserve">
+    <value>Neŝanĝebla loka variablo '{0}' devas esti pravalorizita dum la deklaro</value>
+  </data>
+  <data name="LVP0002_Description" xml:space="preserve">
+    <value>Lokaj variabloj komenciĝantaj per substreko (_) estas traktataj kiel neŝanĝeblaj kaj devas ricevi komencan valoron dum deklaro.</value>
+  </data>
+  <data name="LVP0003_Title" xml:space="preserve">
+    <value>Sugesto apliki nomregulon por neŝanĝebla loka variablo</value>
+  </data>
+  <data name="LVP0003_MessageFormat" xml:space="preserve">
+    <value>Loka variablo '{0}' estas efektive neŝanĝebla. Konsideru komenci ĝian nomon per substreko '_'.</value>
+  </data>
+  <data name="LVP0003_Description" xml:space="preserve">
+    <value>Lokaj variabloj, kiuj neniam are reatribuitaj, povas havi sian neŝanĝeblecon eksplicite montritan per komenco de sia nomo per substreko (_).</value>
+  </data>
+  <data name="FIF0001_Title" xml:space="preserve">
+    <value>Kontrolo de fino de FluentIf-ĉeno</value>
+  </data>
+  <data name="FIF0001_MessageFormat" xml:space="preserve">
+    <value>FluentIf-ĉeno devas esti finita per '.Else(...)'</value>
+  </data>
+  <data name="FIF0001_Description" xml:space="preserve">
+    <value>Metodĉenoj komenciĝantaj per Fluent.If() devas ĉiam finiĝi per .Else().</value>
+  </data>
+</root>
