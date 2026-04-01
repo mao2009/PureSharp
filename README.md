@@ -1,8 +1,8 @@
 # PureSharp
 
-**PureSharp** is a toolset designed to strongly support "referential transparency" and "immutability" in C#, bringing the safety of functional programming to C#. It leverages Roslyn analyzers to enforce robust, bug-resistant code writing at the compilation level.
+[English](README.md) | [日本語](README_ja.md) | [简体中文](README_zh-CN.md) | [繁體中文](README_zh-TW.md) | [Esperanto](README_eo.md) | [Klingon](README_tlh.md) | [Español](README_es.md) | [Français](README_fr.md) | [Deutsch](README_de.md) | [한국어](README_ko.md)
 
-[日本語 / Japanese](README_jp.md)
+**PureSharp** is a toolset designed to strongly support "referential transparency" and "immutability" in C#, bringing the safety of functional programming to C#. It leverages Roslyn analyzers to enforce robust, bug-resistant code writing at the compilation level.
 
 ## Core Concepts
 
