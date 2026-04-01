@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="RT0001_Title" xml:space="preserve">
+    <value>Statischer Feldzugriff in [PureMethod]</value>
+  </data>
+  <data name="RT0001_MessageFormat" xml:space="preserve">
+    <value>Zugriff auf statisches, nicht schreibgeschütztes Feld '{1}' innerhalb der [PureMethod]-Methode '{0}' nicht möglich</value>
+  </data>
+  <data name="RT0001_Description" xml:space="preserve">
+    <value>Referenziell transparente Methoden dürfen nicht auf statischen veränderlichen Zustand zugreifen.</value>
+  </data>
+  <data name="RT0002_Title" xml:space="preserve">
+    <value>Aufruf einer nicht-reinen Methode in [PureMethod]</value>
+  </data>
+  <data name="RT0002_MessageFormat" xml:space="preserve">
+    <value>Aufruf der nicht-reinen Methode '{1}' innerhalb der [PureMethod]-Methode '{0}' nicht möglich</value>
+  </data>
+  <data name="RT0002_Description" xml:space="preserve">
+    <value>Referenziell transparente Methoden können nur Methoden aufrufen, die mit dem Attribut [PureMethod] markiert sind, oder bekannte reine Standardbibliotheksmethoden.</value>
+  </data>
+  <data name="RT0003_Title" xml:space="preserve">
+    <value>E/A-Operation in [PureMethod]</value>
+  </data>
+  <data name="RT0003_MessageFormat" xml:space="preserve">
+    <value>E/A-Operationen innerhalb der [PureMethod]-Methode '{0}' nicht möglich</value>
+  </data>
+  <data name="RT0003_Description" xml:space="preserve">
+    <value>Referenziell transparente Methoden dürfen keine E/A-Operationen wie Protokollierung, Dateizugriff oder Netzwerkkommunikation ausführen.</value>
+  </data>
+  <data name="LVP0001_Title" xml:space="preserve">
+    <value>Neuzuweisung zu unveränderlicher lokaler Variable verboten</value>
+  </data>
+  <data name="LVP0001_MessageFormat" xml:space="preserve">
+    <value>Einer unveränderlichen lokalen Variable '{0}' kann kein Wert neu zugewiesen werden</value>
+  </data>
+  <data name="LVP0001_Description" xml:space="preserve">
+    <value>Lokale Variablen, die mit einem Unterstrich (_) beginnen, werden als unveränderlich behandelt, und eine Neuzuweisung nach der Deklaration ist verboten.</value>
+  </data>
+  <data name="LVP0002_Title" xml:space="preserve">
+    <value>Obligatorische Initialisierung einer unveränderlichen lokalen Variable</value>
+  </data>
+  <data name="LVP0002_MessageFormat" xml:space="preserve">
+    <value>Die unveränderliche lokale Variable '{0}' muss zum Zeitpunkt der Deklaration initialisiert werden</value>
+  </data>
+  <data name="LVP0002_Description" xml:space="preserve">
+    <value>Lokale Variablen, die mit einem Unterstrich (_) beginnen, werden als unveränderlich behandelt und müssen bei der Deklaration einen Initialwert erhalten.</value>
+  </data>
+  <data name="LVP0003_Title" xml:space="preserve">
+    <value>Vorschlag zur Anwendung der Namenskonvention für unveränderliche lokale Variablen</value>
+  </data>
+  <data name="LVP0003_MessageFormat" xml:space="preserve">
+    <value>Die lokale Variable '{0}' ist effektiv unveränderlich. Erwägen Sie, ihren Namen mit einem Unterstrich '_' zu beginnen.</value>
+  </data>
+  <data name="LVP0003_Description" xml:space="preserve">
+    <value>Lokale Variablen, die nie neu zugewiesen werden, können ihre Unveränderlichkeit explizit durch einen vorangestellten Unterstrich (_) anzeigen.</value>
+  </data>
+  <data name="FIF0001_Title" xml:space="preserve">
+    <value>FluentIf-Kettenabschlussprüfung</value>
+  </data>
+  <data name="FIF0001_MessageFormat" xml:space="preserve">
+    <value>FluentIf-Kette muss mit '.Else(...)' abgeschlossen werden</value>
+  </data>
+  <data name="FIF0001_Description" xml:space="preserve">
+    <value>Methodenkette, die mit Fluent.If() beginnen, müssen immer mit .Else() enden.</value>
+  </data>
+</root>

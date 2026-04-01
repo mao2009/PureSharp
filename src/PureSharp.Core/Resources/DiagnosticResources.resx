@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="RT0001_Title" xml:space="preserve">
+    <value>Static field access in [PureMethod]</value>
+  </data>
+  <data name="RT0001_MessageFormat" xml:space="preserve">
+    <value>Cannot access static, non-readonly field '{1}' within [PureMethod] method '{0}'</value>
+  </data>
+  <data name="RT0001_Description" xml:space="preserve">
+    <value>Referentially transparent methods must not access static mutable state.</value>
+  </data>
+  <data name="RT0002_Title" xml:space="preserve">
+    <value>Non-pure method call in [PureMethod]</value>
+  </data>
+  <data name="RT0002_MessageFormat" xml:space="preserve">
+    <value>Cannot call non-pure method '{1}' within [PureMethod] method '{0}'</value>
+  </data>
+  <data name="RT0002_Description" xml:space="preserve">
+    <value>Referentially transparent methods can only call methods marked with the [PureMethod] attribute or known pure standard library methods.</value>
+  </data>
+  <data name="RT0003_Title" xml:space="preserve">
+    <value>I/O operation in [PureMethod]</value>
+  </data>
+  <data name="RT0003_MessageFormat" xml:space="preserve">
+    <value>Cannot perform I/O operations within [PureMethod] method '{0}'</value>
+  </data>
+  <data name="RT0003_Description" xml:space="preserve">
+    <value>Referentially transparent methods must not perform I/O operations such as logging, file access, or network communication.</value>
+  </data>
+  <data name="LVP0001_Title" xml:space="preserve">
+    <value>Reassignment to immutable local variable prohibited</value>
+  </data>
+  <data name="LVP0001_MessageFormat" xml:space="preserve">
+    <value>Cannot reassign a value to immutable local variable '{0}'</value>
+  </data>
+  <data name="LVP0001_Description" xml:space="preserve">
+    <value>Local variables starting with an underscore (_) are treated as immutable, and reassignment after declaration is prohibited.</value>
+  </data>
+  <data name="LVP0002_Title" xml:space="preserve">
+    <value>Mandatory initialization of immutable local variable</value>
+  </data>
+  <data name="LVP0002_MessageFormat" xml:space="preserve">
+    <value>Immutable local variable '{0}' must be initialized at the time of declaration</value>
+  </data>
+  <data name="LVP0002_Description" xml:space="preserve">
+    <value>Local variables starting with an underscore (_) are treated as immutable and must be assigned an initial value upon declaration.</value>
+  </data>
+  <data name="LVP0003_Title" xml:space="preserve">
+    <value>Suggestion to apply naming convention for immutable local variable</value>
+  </data>
+  <data name="LVP0003_MessageFormat" xml:space="preserve">
+    <value>Local variable '{0}' is effectively immutable. Consider starting its name with an underscore '_'.</value>
+  </data>
+  <data name="LVP0003_Description" xml:space="preserve">
+    <value>Local variables that are never reassigned can have their immutability explicitly shown by starting their name with an underscore (_).</value>
+  </data>
+  <data name="FIF0001_Title" xml:space="preserve">
+    <value>FluentIf chain termination check</value>
+  </data>
+  <data name="FIF0001_MessageFormat" xml:space="preserve">
+    <value>FluentIf chain must be terminated with '.Else(...)'</value>
+  </data>
+  <data name="FIF0001_Description" xml:space="preserve">
+    <value>Method chains starting with Fluent.If() must always end with .Else().</value>
+  </data>
+</root>

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="RT0001_Title" xml:space="preserve">
+    <value>[PureMethod] メソッド内での静的フィールドアクセス</value>
+  </data>
+  <data name="RT0001_MessageFormat" xml:space="preserve">
+    <value>[PureMethod] メソッド '{0}' 内で静的かつ非 readonly なフィールド '{1}' にアクセスすることはできません</value>
+  </data>
+  <data name="RT0001_Description" xml:space="preserve">
+    <value>参照透過なメソッドは静的な可変状態にアクセスしてはなりません.</value>
+  </data>
+  <data name="RT0002_Title" xml:space="preserve">
+    <value>[PureMethod] メソッド内での非純粋メソッド呼び出し</value>
+  </data>
+  <data name="RT0002_MessageFormat" xml:space="preserve">
+    <value>[PureMethod] メソッド '{0}' 内で純粋でないメソッド '{1}' を呼び出すことはできません</value>
+  </data>
+  <data name="RT0002_Description" xml:space="preserve">
+    <value>参照透過なメソッドは、[PureMethod] アトリビュートが付与されたメソッドまたは既知の純粋な標準ライブラリのメソッドのみを呼び出すことができます.</value>
+  </data>
+  <data name="RT0003_Title" xml:space="preserve">
+    <value>[PureMethod] メソッド内での I/O 操作</value>
+  </data>
+  <data name="RT0003_MessageFormat" xml:space="preserve">
+    <value>[PureMethod] メソッド '{0}' 内で I/O 操作を行うことはできません</value>
+  </data>
+  <data name="RT0003_Description" xml:space="preserve">
+    <value>参照透過なメソッドはロギング、ファイルアクセス、ネットワーク通信などの I/O 操作を行ってはなりません.</value>
+  </data>
+  <data name="LVP0001_Title" xml:space="preserve">
+    <value>不変ローカル変数への再代入禁止</value>
+  </data>
+  <data name="LVP0001_MessageFormat" xml:space="preserve">
+    <value>不変ローカル変数 '{0}' に値を再代入することはできません</value>
+  </data>
+  <data name="LVP0001_Description" xml:space="preserve">
+    <value>アンダースコア (_) で始まるローカル変数は不変として扱われ、宣言後の再代入は禁止されています.</value>
+  </data>
+  <data name="LVP0002_Title" xml:space="preserve">
+    <value>不変ローカル変数の宣言時初期化の強制</value>
+  </data>
+  <data name="LVP0002_MessageFormat" xml:space="preserve">
+    <value>不変ローカル変数 '{0}' は宣言時に初期化される必要があります</value>
+  </data>
+  <data name="LVP0002_Description" xml:space="preserve">
+    <value>アンダースコア (_) で始まるローカル変数は不変として扱われ、宣言と同時に初期値を代入する必要があります.</value>
+  </data>
+  <data name="LVP0003_Title" xml:space="preserve">
+    <value>不変ローカル変数への命名規則適用の提案</value>
+  </data>
+  <data name="LVP0003_MessageFormat" xml:space="preserve">
+    <value>ローカル変数 '{0}' は実質的に不変です。アンダースコア '_' で 始まる名前にすることを検討してください</value>
+  </data>
+  <data name="LVP0003_Description" xml:space="preserve">
+    <value>一度も再代入されないローカル変数はアンダースコア (_) で始まる名前にすることで、不変性を明示できます.</value>
+  </data>
+  <data name="FIF0001_Title" xml:space="preserve">
+    <value>FluentIf チェーンの終端チェック</value>
+  </data>
+  <data name="FIF0001_MessageFormat" xml:space="preserve">
+    <value>FluentIf チェーンは '.Else(...)' で終了しなければなりません</value>
+  </data>
+  <data name="FIF0001_Description" xml:space="preserve">
+    <value>Fluent.If() で始まるメソッドチェーンは必ず .Else() で終了する必要があります.</value>
+  </data>
+</root>

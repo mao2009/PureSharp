@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using PureSharp.Core;
 
 namespace PureSharp.Analyzers;
 
@@ -15,12 +16,12 @@ public class FluentIfAnalyzer : DiagnosticAnalyzer
     /// <summary>FIF0001: Else の欠落</summary>
     public static readonly DiagnosticDescriptor FIF0001 = new(
         id: "FIF0001",
-        title: "FluentIf チェーンの終端チェック",
-        messageFormat: "FluentIf チェーンは '.Else(...)' で終了しなければなりません",
+        title: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.FIF0001_Title), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
+        messageFormat: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.FIF0001_MessageFormat), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
         category: "FluentIf",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "Fluent.If() で始まるメソッドチェーンは必ず .Else() で終了する必要があります.");
+        description: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.FIF0001_Description), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)));
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>

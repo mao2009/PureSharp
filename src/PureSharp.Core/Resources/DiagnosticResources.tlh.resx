@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="RT0001_Title" xml:space="preserve">
+    <value>[PureMethod]Daq static field ghov</value>
+  </data>
+  <data name="RT0001_MessageFormat" xml:space="preserve">
+    <value>[PureMethod] mI' '{0}'Daq static, non-readonly field '{1}' ghovbe'lu'</value>
+  </data>
+  <data name="RT0001_Description" xml:space="preserve">
+    <value>Referentially transparent mI'mey static mutable state ghovbe'nIS.</value>
+  </data>
+  <data name="RT0002_Title" xml:space="preserve">
+    <value>[PureMethod]Daq non-pure mI' yIghov</value>
+  </data>
+  <data name="RT0002_MessageFormat" xml:space="preserve">
+    <value>[PureMethod] mI' '{0}'Daq non-pure mI' '{1}' yIghovbe'</value>
+  </data>
+  <data name="RT0002_Description" xml:space="preserve">
+    <value>Referentially transparent mI'mey [PureMethod] mI'mey ghap pure standard library mI'mey neH yIghovlaH.</value>
+  </data>
+  <data name="RT0003_Title" xml:space="preserve">
+    <value>[PureMethod]Daq I/O mI'</value>
+  </data>
+  <data name="RT0003_MessageFormat" xml:space="preserve">
+    <value>[PureMethod] mI' '{0}'Daq I/O mI'mey yIghovbe'</value>
+  </data>
+  <data name="RT0003_Description" xml:space="preserve">
+    <value>Referentially transparent mI'mey logging, file access, ghap network communication rur I/O mI'mey yIghovbe'nIS.</value>
+  </data>
+  <data name="LVP0001_Title" xml:space="preserve">
+    <value>immutable local variable choHbe'lu'</value>
+  </data>
+  <data name="LVP0001_MessageFormat" xml:space="preserve">
+    <value>immutable local variable '{0}' choHlaHbe'lu'</value>
+  </data>
+  <data name="LVP0001_Description" xml:space="preserve">
+    <value>underscore (_) nI' local variablemey immutable rur, 'ej declaration pav choHbe'lu'.</value>
+  </data>
+  <data name="LVP0002_Title" xml:space="preserve">
+    <value>immutable local variable initialization nISlu'</value>
+  </data>
+  <data name="LVP0002_MessageFormat" xml:space="preserve">
+    <value>declaration poH immutable local variable '{0}' initialization nISlu'</value>
+  </data>
+  <data name="LVP0002_Description" xml:space="preserve">
+    <value>underscore (_) nI' local variablemey immutable rur, 'ej declaration poH initial value nISlu'.</value>
+  </data>
+  <data name="LVP0003_Title" xml:space="preserve">
+    <value>immutable local variable naming convention yIghov</value>
+  </data>
+  <data name="LVP0003_MessageFormat" xml:space="preserve">
+    <value>local variable '{0}' immutable rur. underscore '_' yIlo'.</value>
+  </data>
+  <data name="LVP0003_Description" xml:space="preserve">
+    <value>reatribuobe'lu' local variablemey immutable 'ej underscore (_) yIlo'laH. </value>
+  </data>
+  <data name="FIF0001_Title" xml:space="preserve">
+    <value>FluentIf chain termination check</value>
+  </data>
+  <data name="FIF0001_MessageFormat" xml:space="preserve">
+    <value>FluentIf chain '.Else(...)' yIlo'nIS</value>
+  </data>
+  <data name="FIF0001_Description" xml:space="preserve">
+    <value>Fluent.If() mI'mey '.Else()' yIlo'nIS.</value>
+  </data>
+</root>
