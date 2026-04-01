@@ -1,8 +1,6 @@
 # PureSharp (日本語版)
 
-これは PureSharp プロジェクトの日本語版 README です。
-
-- [English / 英語](README.md)
+[English](README.md) | [日本語](README_ja.md) | [简体中文](README_zh-CN.md) | [繁體中文](README_zh-TW.md) | [Esperanto](README_eo.md) | [Klingon](README_tlh.md) | [Español](README_es.md) | [Français](README_fr.md) | [Deutsch](README_de.md) | [한국어](README_ko.md)
 
 ---
 
