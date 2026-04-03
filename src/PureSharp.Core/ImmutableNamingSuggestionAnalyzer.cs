@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
 using PureSharp.Core;
+using PureSharp.Core.Resources;
 
 namespace PureSharp.Analyzers;
 
@@ -16,12 +17,12 @@ public class ImmutableNamingSuggestionAnalyzer : DiagnosticAnalyzer
     /// <summary>LVP0003: 実質的に不変なローカル変数のアンダースコア命名規則の適用推奨</summary>
     public static readonly DiagnosticDescriptor LVP0003 = new(
         id: "LVP0003",
-        title: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.LVP0003_Title), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
-        messageFormat: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.LVP0003_MessageFormat), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
+        title: new LocalizableResourceString(nameof(DiagnosticResources.LVP0003_Title), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)),
+        messageFormat: new LocalizableResourceString(nameof(DiagnosticResources.LVP0001_MessageFormat), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)),
         category: "Naming",
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.LVP0003_Description), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)));
+        description: new LocalizableResourceString(nameof(DiagnosticResources.FIF0001_Description), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)));
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>

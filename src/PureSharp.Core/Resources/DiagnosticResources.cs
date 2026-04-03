@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 using System.Resources;
 
@@ -5,7 +6,9 @@ namespace PureSharp.Core.Resources;
 
 internal static class DiagnosticResources
 {
-    private static readonly ResourceManager resourceManager = new ResourceManager("PureSharp.Core.Resources.DiagnosticResources", typeof(DiagnosticResources).GetTypeInfo().Assembly);
+    private static readonly ResourceManager resourceManager = new ResourceManager(
+        "PureSharp.Core.Resources.DiagnosticResources",
+        typeof(DiagnosticResources).Assembly);
 
     public static ResourceManager ResourceManager => resourceManager;
 

@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using PureSharp.Core;
+using PureSharp.Core.Resources;
 
 namespace PureSharp.Analyzers;
 
@@ -16,12 +17,12 @@ public class FluentIfAnalyzer : DiagnosticAnalyzer
     /// <summary>FIF0001: Else の欠落</summary>
     public static readonly DiagnosticDescriptor FIF0001 = new(
         id: "FIF0001",
-        title: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.FIF0001_Title), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
-        messageFormat: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.FIF0001_MessageFormat), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
+        title: new LocalizableResourceString(nameof(DiagnosticResources.FIF0001_Title), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)),
+        messageFormat: new LocalizableResourceString(nameof(DiagnosticResources.FIF0001_MessageFormat), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)),
         category: "FluentIf",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.FIF0001_Description), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)));
+        description: new LocalizableResourceString(nameof(DiagnosticResources.FIF0001_Description), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)));
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>

@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
 using PureSharp.Core;
+using PureSharp.Core.Resources;
 
 namespace PureSharp.Analyzers;
 
@@ -17,32 +18,32 @@ public class ReferentialTransparencyAnalyzer : DiagnosticAnalyzer
     /// <summary>RT0001: static かつ非 readonly なフィールドへのアクセス</summary>
     public static readonly DiagnosticDescriptor RT0001 = new(
         id: "RT0001",
-        title: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.RT0001_Title), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
-        messageFormat: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.RT0001_MessageFormat), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
+        title: new LocalizableResourceString(nameof(DiagnosticResources.RT0001_Title), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)),
+        messageFormat: new LocalizableResourceString(nameof(DiagnosticResources.RT0001_MessageFormat), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)),
         category: "Purity",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.RT0001_Description), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)));
+        description: new LocalizableResourceString(nameof(DiagnosticResources.RT0001_Description), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)));
 
     /// <summary>RT0002: [PureMethod] でないメソッドの呼び出し</summary>
     public static readonly DiagnosticDescriptor RT0002 = new(
         id: "RT0002",
-        title: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.RT0002_Title), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
-        messageFormat: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.RT0002_MessageFormat), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
+        title: new LocalizableResourceString(nameof(DiagnosticResources.RT0002_Title), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)),
+        messageFormat: new LocalizableResourceString(nameof(DiagnosticResources.RT0002_MessageFormat), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)),
         category: "Purity",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.RT0002_Description), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)));
+        description: new LocalizableResourceString(nameof(DiagnosticResources.RT0002_Description), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)));
 
     /// <summary>RT0003: I/O 操作</summary>
     public static readonly DiagnosticDescriptor RT0003 = new(
         id: "RT0003",
-        title: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.RT0003_Title), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
-        messageFormat: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.RT0003_MessageFormat), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
+        title: new LocalizableResourceString(nameof(DiagnosticResources.RT0003_Title), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)),
+        messageFormat: new LocalizableResourceString(nameof(DiagnosticResources.RT0003_MessageFormat), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)),
         category: "Purity",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.RT0003_Description), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)));
+        description: new LocalizableResourceString(nameof(DiagnosticResources.RT0003_Description), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)));
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>

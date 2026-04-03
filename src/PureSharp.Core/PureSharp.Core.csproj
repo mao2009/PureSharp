@@ -32,6 +32,16 @@
   <!-- Pack the DLL as an analyzer. -->
   <ItemGroup>
     <Content Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <!-- Pack satellite assemblies for localization under analyzer path -->
+    <Content Include="$(OutputPath)\ja\$(AssemblyName).resources.dll" Pack="true" PackagePath="analyzers/dotnet/cs/ja" Visible="false" />
+    <Content Include="$(OutputPath)\de\$(AssemblyName).resources.dll" Pack="true" PackagePath="analyzers/dotnet/cs/de" Visible="false" />
+    <Content Include="$(OutputPath)\es\$(AssemblyName).resources.dll" Pack="true" PackagePath="analyzers/dotnet/cs/es" Visible="false" />
+    <Content Include="$(OutputPath)\fr\$(AssemblyName).resources.dll" Pack="true" PackagePath="analyzers/dotnet/cs/fr" Visible="false" />
+    <Content Include="$(OutputPath)\ko\$(AssemblyName).resources.dll" Pack="true" PackagePath="analyzers/dotnet/cs/ko" Visible="false" />
+    <Content Include="$(OutputPath)\zh-CN\$(AssemblyName).resources.dll" Pack="true" PackagePath="analyzers/dotnet/cs/zh-CN" Visible="false" />
+    <Content Include="$(OutputPath)\zh-TW\$(AssemblyName).resources.dll" Pack="true" PackagePath="analyzers/dotnet/cs/zh-TW" Visible="false" />
+    <Content Include="$(OutputPath)\eo\$(AssemblyName).resources.dll" Pack="true" PackagePath="analyzers/dotnet/cs/eo" Visible="false" />
+
   </ItemGroup>
 
 </Project>
