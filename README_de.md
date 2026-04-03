@@ -2,6 +2,8 @@
 
 [English](README.md) | [日本語](README_ja.md) | [简体中文](README_zh-CN.md) | [繁體中文](README_zh-TW.md) | [Esperanto](README_eo.md) | [Klingon](README_tlh.md) | [Español](README_es.md) | [Français](README_fr.md) | [Deutsch](README_de.md) | [한국어](README_ko.md)
 
+[![CI & NuGet Upload](https://github.com/mao2009/PureSharp/actions/workflows/upload_nuget.yml/badge.svg)](https://github.com/mao2009/PureSharp/actions/workflows/upload_nuget.yml) [![NuGet](https://img.shields.io/nuget/v/loach.PureSharp.svg)](https://www.nuget.org/packages/loach.PureSharp) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![X (Twitter) Follow](https://img.shields.io/twitter/follow/loach_mao)](https://x.com/loach_mao)
+
 **PureSharp** ist ein Toolset, das entwickelt wurde, um die „referenzielle Transparenz“ und „Immutabilität“ (Unveränderlichkeit) in C# stark zu unterstützen und die Sicherheit der funktionalen Programmierung in C# zu bringen. Es nutzt Roslyn-Analyzer, um robustes, fehlerresistentes Schreiben von Code auf Kompilierungsebene zu erzwingen.
 
 ## Kernkonzepte
