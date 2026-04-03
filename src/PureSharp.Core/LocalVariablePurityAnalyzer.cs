@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
 using PureSharp.Core;
+using PureSharp.Core.Resources;
 
 namespace PureSharp.Analyzers;
 
@@ -15,22 +16,22 @@ public class LocalVariablePurityAnalyzer : DiagnosticAnalyzer
     /// <summary>LVP0001: 不変ローカル変数への再代入</summary>
     public static readonly DiagnosticDescriptor LVP0001 = new(
         id: "LVP0001",
-        title: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.LVP0001_Title), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
-        messageFormat: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.LVP0001_MessageFormat), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
+        title: new LocalizableResourceString(nameof(DiagnosticResources.LVP0001_Title), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)),
+        messageFormat: new LocalizableResourceString(nameof(DiagnosticResources.LVP0001_MessageFormat), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)),
         category: "Purity",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.LVP0001_Description), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)));
+        description: new LocalizableResourceString(nameof(DiagnosticResources.LVP0001_Description), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)));
 
     /// <summary>LVP0002: 不変ローカル変数の宣言時初期化の強制</summary>
     public static readonly DiagnosticDescriptor LVP0002 = new(
         id: "LVP0002",
-        title: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.LVP0002_Title), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
-        messageFormat: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.LVP0002_MessageFormat), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)),
+        title: new LocalizableResourceString(nameof(DiagnosticResources.LVP0002_Title), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)),
+        messageFormat: new LocalizableResourceString(nameof(DiagnosticResources.LVP0002_MessageFormat), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)),
         category: "Purity",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: new LocalizableResourceString(nameof(PureSharp.Core.Resources.DiagnosticResources.LVP0002_Description), PureSharp.Core.Resources.DiagnosticResources.ResourceManager, typeof(PureSharp.Core.Resources.DiagnosticResources)));
+        description: new LocalizableResourceString(nameof(DiagnosticResources.LVP0002_Description), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)));
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
