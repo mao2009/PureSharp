@@ -1,0 +1,9 @@
+{
+  "name": "{{FEATURE_NAME}}",
+  "language": "ja",
+  "created": "{{TIMESTAMP}}",
+  "project": {
+    "name": "PureSharp",
+    "description": "{{PROJECT_DESCRIPTION}}"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "fix-local-variable-reassignment",
+  "language": "ja",
+  "created": "2026-05-01T00:00:00Z",
+  "updated_at": "2026-05-01T00:00:00Z",
+  "phase": "tasks-generated",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": true
+    }
+  },
+  "project": {
+    "name": "PureSharp",
+    "description": "変数が再代入されていない場合に _ を使用して不変宣言することを推奨する LVP0003 エラー表示の修正"
+  }
+}
