@@ -18,7 +18,7 @@ public class ImmutableNamingSuggestionAnalyzer : DiagnosticAnalyzer
     public static readonly DiagnosticDescriptor LVP0003 = new(
         id: "LVP0003",
         title: new LocalizableResourceString(nameof(DiagnosticResources.LVP0003_Title), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)),
-        messageFormat: new LocalizableResourceString(nameof(DiagnosticResources.LVP0001_MessageFormat), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)),
+        messageFormat: new LocalizableResourceString(nameof(DiagnosticResources.LVP0003_MessageFormat), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)),
         category: "Naming",
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,

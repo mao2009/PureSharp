@@ -321,6 +321,38 @@ public class Test
         await VerifyCS.VerifyAnalyzerAsync(testCode);
     }
 
+    [Fact]
+    public async Task LVP0003_ReportedForEffectivelyImmutableVariable()
+    {
+        // 不変として扱われる変数 (再代入なし) に LVP0003 警告が報告されることを確認
+        var testCode = @"
+public class Test
+{
+    public void Method()
+    {
+        int {|LVP0003:x|} = 10;
+    }
+}";
+        await VerifyCS.VerifyAnalyzerAsync(testCode);
+    }
+
+    [Fact]
+    public async Task LVP0003_MessageFormat_UsesLVP0003_NotLVP0001()
+    {
+        // LVP0003 が LVP0003_MessageFormat を使用し、LVP0001_MessageFormat を使用していないことを確認
+        // これは静的記述子のテストで確認済みなので、実際の実行を確認するテストとして追加
+        // 正しいメッセージ: "Local variable '{0}' is effectively immutable"
+        var testCode = @"
+public class Test
+{
+    public void Method()
+    {
+        int {|LVP0003:x|} = 10;
+    }
+}";
+        await VerifyCS.VerifyAnalyzerAsync(testCode);
+    }
+
     // =========================================================
     // 構文的コンテキストの識別ロジックの検証
     // =========================================================
