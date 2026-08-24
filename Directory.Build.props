@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Version SSOT (Single Source of Truth) for the entire repository -->
+    <Version>0.1.6</Version>
+  </PropertyGroup>
+</Project>
