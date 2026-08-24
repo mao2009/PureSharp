@@ -100,6 +100,67 @@ int status = Fluent.If(score >= 80, () => 1)
 
 ---
 
+## 診断の設定
+
+PureSharp は Roslyn 標準の `.editorconfig` 機構を使用して、診断の重大度を設定します。`dotnet_diagnostic.<ID>.severity` 設定で、各診断をエラー、警告、または抑制として報告することができます。
+
+### サポートされている診断
+
+| 診断ID | カテゴリー | タイトル | 既定の重大度 |
+|---|---|---|---|
+| **RT0001** | Purity | 静的可変フィールドへのアクセス | エラー |
+| **RT0002** | Purity | 非純粋メソッドの呼び出し | エラー |
+| **RT0003** | Purity | I/O操作 | エラー |
+| **LVP0001** | Purity | 不変ローカル変数への再代入 | エラー |
+| **LVP0002** | Purity | 不変ローカル変数の初期化忘れ | エラー |
+| **LVP0003** | Naming | 効果的に不変な変数の命名提案 | 警告 |
+| **FIF0001** | FluentIf | FluentIf チェーンの .Else() での終端忘れ | エラー |
+
+### 設定例
+
+プロジェクトのルートに `.editorconfig` を作成（または更新）します：
+
+```editorconfig
+# .editorconfig
+
+root = true
+
+[*.cs]
+# PureSharp の診断重大度を設定
+# 有効な値: none, silent, suggestion, warning, error
+
+# 参照透過性 (RT) - 既定: error
+dotnet_diagnostic.RT0001.severity = error
+dotnet_diagnostic.RT0002.severity = error
+dotnet_diagnostic.RT0003.severity = error
+
+# ローカル変数の不変性 (LVP) - 既定: error/warning
+dotnet_diagnostic.LVP0001.severity = error
+dotnet_diagnostic.LVP0002.severity = error
+dotnet_diagnostic.LVP0003.severity = warning
+
+# FluentIf (FIF) - 既定: error
+dotnet_diagnostic.FIF0001.severity = error
+```
+
+### 重大度レベル
+
+- **error**: 診断が検出された場合ビルドが失敗します
+- **warning**: 警告が表示されますがビルドは成功します
+- **suggestion**: コード品質の軽微な提案（IDE内でハイライトされます）
+- **silent**: 診断が出力から抑制されますが分析は実行されます
+- **none**: 診断が完全に抑制されます
+
+### 例：診断を抑制する
+
+```editorconfig
+[*.cs]
+# LVP0003（命名提案）を抑制
+dotnet_diagnostic.LVP0003.severity = none
+```
+
+---
+
 ## 開発の動機
 C# は非常に強力な言語ですが、大規模な開発や複雑なロジックにおいて、意図しない副作用や変数の再利用が原因でデバッグが困難になることがあります。PureSharp は、開発者に「制約」という名の「自由（バグからの解放）」を提供するために生まれました。
 
