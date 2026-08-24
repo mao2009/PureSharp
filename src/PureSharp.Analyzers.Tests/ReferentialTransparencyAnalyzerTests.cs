@@ -197,4 +197,15 @@ public class Printer
 " + PureAttributeSource;
         await VerifyCS.VerifyAnalyzerAsync(testCode);
     }
+
+    // =========================================================
+    // 注記: Roslyn 標準 .editorconfig による severity 制御テスト
+    //
+    // Roslyn標準のDiagnosticOptions機構はAnalyzer側では自動的に機能します。
+    // .editorconfig での severity 設定は、Roslyn が解析時に自動的に適用するため、
+    // Analyzer 実装の側で特別な対応は不要です。
+    //
+    // consumer project での実際の .editorconfig 設定を通じた統合テストを推奨します。
+    // （テストプロジェクトのスコープ外で検証）
+    // =========================================================
 }
