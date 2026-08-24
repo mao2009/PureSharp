@@ -1,0 +1,33 @@
+# EditorConfig for PureSharp Consumer App
+# This file demonstrates Roslyn standard diagnostic severity configuration
+
+root = true
+
+[*.cs]
+# Configure PureSharp diagnostic severities using Roslyn standard format:
+# dotnet_diagnostic.<DiagnosticID>.severity = none | silent | suggestion | warning | error
+
+# Referential Transparency Diagnostics (RT)
+# RT0001: Static mutable field access
+# Change to "none" to suppress, "warning" for warning, "error" for error
+dotnet_diagnostic.RT0001.severity = error
+
+# RT0002: Non-pure method call
+dotnet_diagnostic.RT0002.severity = error
+
+# RT0003: I/O operation
+dotnet_diagnostic.RT0003.severity = error
+
+# Local Variable Purity Diagnostics (LVP)
+# LVP0001: Reassignment to immutable local variable
+dotnet_diagnostic.LVP0001.severity = error
+
+# LVP0002: Immutable local variable missing initializer
+dotnet_diagnostic.LVP0002.severity = error
+
+# LVP0003: Naming suggestion for effectively immutable variables
+dotnet_diagnostic.LVP0003.severity = warning
+
+# FluentIf Diagnostics (FIF)
+# FIF0001: FluentIf chain not terminated with .Else()
+dotnet_diagnostic.FIF0001.severity = error

@@ -96,6 +96,67 @@ int status = Fluent.If(score >= 80, () => 1)
 
 ---
 
+## Diagnostic Configuration
+
+PureSharp uses Roslyn's standard `.editorconfig` mechanism for configuring diagnostic severity. You can control how each diagnostic is reported (error, warning, or suppressed) using the `dotnet_diagnostic.<ID>.severity` setting.
+
+### Supported Diagnostics
+
+| Diagnostic ID | Category | Title | Default Severity |
+|---|---|---|---|
+| **RT0001** | Purity | Static mutable field access | Error |
+| **RT0002** | Purity | Non-pure method call | Error |
+| **RT0003** | Purity | I/O operation | Error |
+| **LVP0001** | Purity | Reassignment to immutable local variable | Error |
+| **LVP0002** | Purity | Immutable local variable missing initializer | Error |
+| **LVP0003** | Naming | Naming suggestion for effectively immutable variables | Warning |
+| **FIF0001** | FluentIf | FluentIf chain not terminated with .Else() | Error |
+
+### Configuration Example
+
+Create (or update) `.editorconfig` in your project root:
+
+```editorconfig
+# .editorconfig
+
+root = true
+
+[*.cs]
+# Configure PureSharp diagnostic severities
+# Valid values: none, silent, suggestion, warning, error
+
+# Referential Transparency (RT) - default: error
+dotnet_diagnostic.RT0001.severity = error
+dotnet_diagnostic.RT0002.severity = error
+dotnet_diagnostic.RT0003.severity = error
+
+# Local Variable Purity (LVP) - default: error/warning
+dotnet_diagnostic.LVP0001.severity = error
+dotnet_diagnostic.LVP0002.severity = error
+dotnet_diagnostic.LVP0003.severity = warning
+
+# FluentIf (FIF) - default: error
+dotnet_diagnostic.FIF0001.severity = error
+```
+
+### Severity Levels
+
+- **error**: Build fails if the diagnostic is triggered
+- **warning**: Displays a warning but build succeeds
+- **suggestion**: Minor suggestion (often used for code quality hints)
+- **silent**: Suppresses the diagnostic from output but analysis still runs
+- **none**: Completely suppresses the diagnostic
+
+### Example: Suppressing a Diagnostic
+
+```editorconfig
+[*.cs]
+# Suppress LVP0003 (naming suggestions)
+dotnet_diagnostic.LVP0003.severity = none
+```
+
+---
+
 ## Motivation for Development
 C# is a very powerful language, but in large-scale development or complex logic, debugging can become difficult due to unintended side effects or variable reuse. PureSharp was born to provide developers with "freedom (from bugs)" in the form of "constraints."
 
