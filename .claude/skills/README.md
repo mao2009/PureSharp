@@ -38,21 +38,27 @@ Two primary skills orchestrate the development workflow:
 
 ### For Merge
 
-```bash
-# Verify merge gates for a PR
-/kiro:merge-init --pr 123
-/kiro:merge-verify --details
+```powershell
+# Verify merge gates for a PR (verification-only, no changes made)
+/merge-skill verify --pr 123 --details
 
-# Execute merge (if gates pass)
-/kiro:merge-execute
+# Review verification report
+# - Check CONFIRMED items
+# - Check for UNVERIFIED or BLOCKED items
 
-# Generate final report
-/kiro:merge-report --format ai
+# If SAFE to merge:
+# 1. Manual merge execution (human approval)
+git checkout main
+git merge --ff-only feature/issue-NNN
+git push origin main
+
+# 2. Post-merge verification (automated)
+/merge-skill verify --pr 123 --post-merge
 ```
 
 ## Files & Directories
 
-```
+```text
 .claude/
 ├── skills/
 │   ├── README.md (this file)
@@ -108,22 +114,22 @@ Located in `.claude/skills/merge-skill/`:
 ### verify-git-state.ps1
 Checks Git state: branch, commits, working tree, remote
 
-```bash
-.\\.claude\skills\merge-skill\verify-git-state.ps1 -Format text
+```powershell
+.\.claude\skills\merge-skill\verify-git-state.ps1 -Format text
 ```
 
 ### verify-build-and-tests.ps1
 Runs local build and tests
 
-```bash
-.\\.claude\skills\merge-skill\verify-build-and-tests.ps1 -Configuration Release
+```powershell
+.\.claude\skills\merge-skill\verify-build-and-tests.ps1 -Configuration Release
 ```
 
 ### verify-ci-status.ps1
 Checks GitHub Actions CI status
 
-```bash
-.\\.claude\skills\merge-skill\verify-ci-status.ps1 -PR 123
+```powershell
+.\.claude\skills\merge-skill\verify-ci-status.ps1 -PR 123
 ```
 
 ## Evidence Classification
@@ -165,7 +171,7 @@ Detailed technical report with full evidence:
 
 The Batch & Merge Skills integrate seamlessly with existing Kiro spec workflow:
 
-```
+```text
 Issue Selection
     ↓
 /kiro:batch-init (analyze dependencies)
@@ -284,7 +290,7 @@ See `WORKFLOW.md` for more troubleshooting scenarios.
 
 ### PureSharp v1.0.0 Roadmap
 
-```
+```text
 #6  Roadmap
 #7  Diagnostic SSOT
 #8  Regression Tests

@@ -55,7 +55,7 @@ try {
         $result.pr.baseRef = $prInfo.baseRefName
         $result.pr.mergeState = $prInfo.mergeStateStatus
 
-        Write-Host "✓ PR #$PR: $($prInfo.state)" -ForegroundColor Green
+        Write-Host "✓ PR #$($prInfo.number): $($prInfo.state)" -ForegroundColor Green
         Write-Host "  Branch: $($prInfo.headRefName) -> $($prInfo.baseRefName)" -ForegroundColor Gray
         Write-Host "  Merge State: $($prInfo.mergeStateStatus)" -ForegroundColor Gray
     } else {

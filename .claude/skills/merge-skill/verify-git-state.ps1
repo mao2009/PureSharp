@@ -105,8 +105,9 @@ try {
         if ($result.workingTree.clean) {
             Write-Host "✓ Working tree: clean" -ForegroundColor Green
         } else {
-            Write-Host "✗ Working tree: dirty" -ForegroundColor Yellow
+            Write-Host "✗ Working tree: dirty" -ForegroundColor Red
             $result.workingTree.changes = $status -split "`n"
+            Add-Error "Working tree has uncommitted changes or untracked files"
         }
     } else {
         Add-Error "Failed to check working tree status"

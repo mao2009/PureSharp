@@ -1,6 +1,10 @@
 # Example Batch & Merge Report
 
+**⚠️ This is a fictional/illustrative example report for reference purposes.**
+
 This document shows the two-layer reporting format for PureSharp Batch & Merge workflow.
+All commit hashes, PR numbers, dates, and other details are fictional examples.
+Do not treat this as an actual execution report.
 
 ---
 
