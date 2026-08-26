@@ -1,0 +1,110 @@
+{
+  "$schema": "https://example.com/schemas/merge-config.schema.json",
+  "$description": "PureSharp Merge Skill Configuration",
+  "metadata": {
+    "version": "1.0",
+    "created": "2026-08-26",
+    "description": "Configuration for safe merge integration of PureSharp changes"
+  },
+  "merge": {
+    "baseBranch": "main",
+    "defaultMergeStrategy": "ff-only",
+    "requireFastForward": false,
+    "requireSignedCommits": false,
+    "requireBranchProtection": true,
+    "autoDeleteBranch": true,
+    "enableAutoMerge": false
+  },
+  "approval": {
+    "requirePRApproval": true,
+    "requiredApprovals": 1,
+    "requireCodeOwnerApproval": false,
+    "dismissStaleReviews": false
+  },
+  "verification": {
+    "gitVerification": {
+      "enabled": true,
+      "verifyBranch": true,
+      "verifyCommits": true,
+      "verifyWorkingTree": true,
+      "verifyRemote": true
+    },
+    "buildVerification": {
+      "enabled": true,
+      "buildConfiguration": "Release",
+      "requireBuildSuccess": true,
+      "buildTimeoutMinutes": 10
+    },
+    "testVerification": {
+      "enabled": true,
+      "requireTestSuccess": true,
+      "testTimeoutMinutes": 15,
+      "minimumCoverage": 85
+    },
+    "ciVerification": {
+      "enabled": true,
+      "requireCICompletion": true,
+      "requireCISuccess": true,
+      "ciTimeoutMinutes": 30,
+      "pollInterval": 30
+    },
+    "prVerification": {
+      "enabled": true,
+      "verifyMergeable": true,
+      "verifyNoConflicts": true,
+      "verifyApprovals": true
+    }
+  },
+  "gates": {
+    "blockOnUnverified": true,
+    "blockOnPending": true,
+    "blockOnFailure": true,
+    "blockOnConflict": true,
+    "blockOnCIFailure": true,
+    "blockOnTestFailure": true,
+    "blockOnBuildFailure": true,
+    "verifyAllChecksPassed": true
+  },
+  "reporting": {
+    "format": "ai",
+    "generateHumanReport": true,
+    "generateAIReport": true,
+    "includeGitState": true,
+    "includeBuildOutput": false,
+    "includeTestOutput": true,
+    "includeCILogs": false,
+    "evidenceClassification": {
+      "enableCONFIRMED": true,
+      "enableINFERRED": true,
+      "enableUNVERIFIED": true
+    }
+  },
+  "postMerge": {
+    "verificationEnabled": true,
+    "verifyBranchState": true,
+    "verifyPRState": true,
+    "verifyRemoteState": true,
+    "triggerCIOnMain": true,
+    "runSmokeTests": true,
+    "waitForCICompletion": false
+  },
+  "notifications": {
+    "notifyOnStart": true,
+    "notifyOnBlock": true,
+    "notifyOnSuccess": true,
+    "notifyOnFailure": true
+  },
+  "safety": {
+    "requireCleanWorkingTree": true,
+    "preventForcePush": true,
+    "preventDirectPushToMain": true,
+    "requirePRBeforeMerge": true,
+    "requireRebaseBeforeMerge": false,
+    "preventMergeWithConflicts": true
+  },
+  "scriptPaths": {
+    "verifyGitState": ".claude/skills/merge-skill/verify-git-state.ps1",
+    "verifyBuildAndTests": ".claude/skills/merge-skill/verify-build-and-tests.ps1",
+    "verifyCIStatus": ".claude/skills/merge-skill/verify-ci-status.ps1"
+  }
+}

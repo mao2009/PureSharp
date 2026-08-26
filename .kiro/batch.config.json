@@ -1,0 +1,104 @@
+{
+  "$schema": "https://example.com/schemas/batch-config.schema.json",
+  "$description": "PureSharp Batch Skill Configuration",
+  "metadata": {
+    "version": "1.0",
+    "created": "2026-08-26",
+    "description": "Configuration for batch orchestration of PureSharp issues"
+  },
+  "batch": {
+    "defaultBatchName": "v1.0-batch",
+    "defaultIssueLabel": "batch-eligible",
+    "maxParallelTasks": 2,
+    "failureMode": "stop",
+    "requireHumanApproval": true,
+    "approvalRequired": {
+      "beforeExecution": false,
+      "beforeMerge": true,
+      "afterCompletion": true
+    }
+  },
+  "verification": {
+    "ciTimeoutMinutes": 30,
+    "gitVerificationEnabled": true,
+    "gitCheckoutDepth": 1,
+    "pruneLocalBranches": true,
+    "verifyRemote": true,
+    "verifyDependencies": true
+  },
+  "execution": {
+    "buildConfiguration": "Release",
+    "runTests": true,
+    "runLocalBuild": true,
+    "pollCIInterval": 30,
+    "maxCIRetries": 3
+  },
+  "dependencies": {
+    "detectionEnabled": true,
+    "validateChains": true,
+    "allowCyclicDependencies": false,
+    "blockOnUnmetDependency": true
+  },
+  "reporting": {
+    "format": "both",
+    "generateHumanReport": true,
+    "generateAIReport": true,
+    "evidenceClassification": {
+      "enableCONFIRMED": true,
+      "enableINFERRED": true,
+      "enableUNVERIFIED": true
+    },
+    "outputDirectory": ".kiro/reports",
+    "includeDetails": true,
+    "includeLogs": true
+  },
+  "parallelization": {
+    "enabled": true,
+    "maxConcurrentBatches": 1,
+    "maxTasksPerBatch": 2,
+    "independenceAnalysis": "required"
+  },
+  "notifications": {
+    "notifyOnStart": true,
+    "notifyOnComplete": true,
+    "notifyOnFailure": true,
+    "notifyOnBlock": true
+  },
+  "roadmap": {
+    "phases": [
+      {
+        "name": "Phase 1: Foundation",
+        "issues": [7, 8, 9, 10],
+        "sequentialExecutionRequired": true,
+        "targetDate": "2026-09-10"
+      },
+      {
+        "name": "Phase 2: Enhancement",
+        "issues": [11, 12, 13],
+        "sequentialExecutionRequired": false,
+        "targetDate": "2026-10-01"
+      },
+      {
+        "name": "Phase 3: Quality",
+        "issues": [14, 15],
+        "sequentialExecutionRequired": false,
+        "targetDate": "2026-10-15"
+      },
+      {
+        "name": "Phase 4: Release",
+        "issues": [16, 17],
+        "sequentialExecutionRequired": true,
+        "targetDate": "2026-11-01"
+      }
+    ]
+  },
+  "safety": {
+    "requireCleanWorkingTree": true,
+    "requireBranchProtection": true,
+    "requirePRApproval": true,
+    "blockOnMergeConflict": true,
+    "blockOnCIFailure": true,
+    "blockOnTestFailure": true,
+    "blockOnBuildFailure": true
+  }
+}
