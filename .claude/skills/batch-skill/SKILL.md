@@ -26,17 +26,31 @@ The Batch Skill orchestrates safe, parallel execution of multiple GitHub Issues 
 ### Parallel Execution Classification
 
 **Issues CANNOT run in parallel if:**
-- They modify the same file/directory (high probability)
-- They modify the same architectural component (e.g., diagnostic contract)
-- Dependency chain exists (A → B → C)
-- API change + consumer change (must sequence)
-- Release/version issues (must serialize)
+- They modify the same file/directory (confirmed)
+- They modify the same architectural component (confirmed)
+- Dependency chain exists (confirmed)
+- API change + consumer change (confirmed)
+- Release/version issues (confirmed)
+- Conflict status is UNVERIFIED
 
 **Issues CAN run in parallel if:**
-- Independent spec implementations
-- Different diagnostic analyzers
-- Different documentation sections
-- Different test categories
+- Independent spec implementations (CONFIRMED: no file overlap)
+- Different diagnostic analyzers (CONFIRMED: different files)
+- Different documentation sections (CONFIRMED: different files)
+- Different test categories (CONFIRMED: different files)
+
+**CRITICAL: Parallel Safety Must Be CONFIRMED**
+
+Do not assume parallel execution is safe based on analysis alone.
+
+Evidence Levels:
+
+- **CONFIRMED**: File-by-file analysis shows no conflicts
+- **INFERRED**: Design suggests no conflicts (not sufficient for parallel)
+- **UNVERIFIED**: Cannot determine conflict status
+
+Parallel execution requires CONFIRMED evidence.
+If conflict status is UNVERIFIED or INFERRED, use SERIAL EXECUTION.
 
 ### Execution Order Determination
 

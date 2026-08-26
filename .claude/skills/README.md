@@ -36,25 +36,32 @@ Two primary skills orchestrate the development workflow:
 /kiro:batch-report --format both
 ```
 
-### For Merge
+### For Merge (Human Approval Always Required)
 
 ```powershell
-# Verify merge gates for a PR (verification-only, no changes made)
+# Step 1: Verify merge gates (verification-only, no changes made)
 /merge-skill verify --pr 123 --details
 
-# Review verification report
-# - Check CONFIRMED items
-# - Check for UNVERIFIED or BLOCKED items
+# Step 2: HUMAN REVIEWS REPORT
+# - Examine CONFIRMED items
+# - Verify no UNVERIFIED or BLOCKED items
+# - Make explicit merge decision
 
-# If SAFE to merge:
-# 1. Manual merge execution (human approval)
+# Step 3: EXPLICIT HUMAN APPROVAL REQUIRED
+# Only proceed if human approves after reviewing step 1 report
+
+# Step 4: Manual merge execution (human performs)
 git checkout main
 git merge --ff-only feature/issue-NNN
 git push origin main
 
-# 2. Post-merge verification (automated)
+# Step 5: Post-merge verification (automated)
 /merge-skill verify --pr 123 --post-merge
 ```
+
+**CRITICAL**: Merge Skill does NOT auto-merge.
+GitHub's `mergeable=true` status does NOT mean merge automatically.
+Human approval is always required before merge execution.
 
 ## Files & Directories
 
