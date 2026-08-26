@@ -147,31 +147,65 @@ After merge:
 
 ## Usage
 
+### Claude Code Skill Invocation
+
+The Merge Skill is invoked as a Claude Code skill for safe merge integration.
+
+**Verify merge gates** (VERIFICATION ONLY - no changes made):
+```
+/merge-skill verify --pr 123 --details
+```
+
+Performs all merge gate verifications:
+- Git state verification
+- Build verification
+- Test verification
+- CI status verification
+- PR verification
+
+Outputs: Human-readable report with CONFIRMED/INFERRED/UNVERIFIED evidence.
+
+**Gate Status**: Reports whether merge is SAFE or BLOCKED.
+
+### Authority & Safety
+
+**Default Mode**: Verification only
+- No merge executed
+- No branches modified
+- No pushes made
+- Safe for any user to run
+
+**Merge Execution**: Requires explicit human approval
+- User must review verification report
+- User must make merge decision
+- Merge is executed by user with proper permissions
+- Post-merge verification runs automatically
+
 ### Typical Workflow
 
-```
-/kiro:merge-init --pr 123
-```
+1. **Verify gates** (automated):
+   ```
+   /merge-skill verify --pr 123
+   ```
+   → Review report, check CONFIRMED items
 
-Initializes merge verification for PR #123.
+2. **Human decision** (manual):
+   - If report shows BLOCKED: Fix issues and retry
+   - If report shows SAFE: Proceed to merge
 
-```
-/kiro:merge-verify --details
-```
+3. **Execute merge** (manual, with confirmation):
+   ```
+   git checkout main
+   git merge --ff-only feature/issue-NNN
+   git push origin main
+   ```
+   → User manually executes merge with full control
 
-Check all merge gates without executing merge.
-
-```
-/kiro:merge-execute --force-push=false
-```
-
-Execute merge after gate verification.
-
-```
-/kiro:merge-report --format ai
-```
-
-Generate detailed AI report with evidence.
+4. **Post-merge verification** (automated):
+   ```
+   /merge-skill verify --pr 123 --post-merge
+   ```
+   → Verify main branch updated and CI triggered
 
 ## Evidence Classification in Merge Context
 

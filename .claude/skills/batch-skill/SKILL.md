@@ -80,33 +80,32 @@ Generate structured reports in two layers:
 
 ### Typical Workflow
 
-```
-/kiro:batch-init "v1.0 batch #7-#12" --issues 7,8,9,10,11,12
-```
+### Claude Code Skill Invocation
 
-Analyzes issues #7-#12 for safe batch execution.
+The Batch Skill is invoked as a Claude Code skill (not Kiro-specific).
 
+**Analyze dependencies and plan batch execution**:
 ```
-/kiro:batch-verify --dry-run
-```
-
-Verify execution plan without modifications.
-
-```
-/kiro:batch-execute --parallel 2 --sequential
+/batch-skill analyze --issues 7,8,9,10,11,12
 ```
 
-Execute batch with max 2 parallel tasks, sequential fallback on failure.
+Provides:
+- Dependency graph analysis
+- Parallel execution classification
+- Execution order recommendation
+- Blocking relationship summary
+
+**Integration workflow** (standard Kiro + Batch Skill):
+1. Batch Skill provides planning (analyze command)
+2. Kiro spec system handles implementation (`/kiro-spec-quick`)
+3. Merge Skill handles integration (separate skill)
+
+## Dependency Graph Example (Illustrative)
+
+**Note**: The following example is illustrative. Actual PureSharp v1.0 issues may have different dependency structures. Always verify dependencies via GitHub issue metadata before execution.
 
 ```
-/kiro:batch-report --format human|ai|both
-```
-
-Generate final report after batch execution.
-
-## Dependency Graph Example
-
-```
+Example Sequential Dependencies:
 Issue #7: Diagnostic SSOT
     ↓ (blocks)
 Issue #8: Regression Tests
@@ -115,15 +114,23 @@ Issue #9: RT Semantics
     ↓ (blocks)
 Issue #10: Interprocedural Analysis
 
+Example Independent Issues:
 Issue #11: LVP (independent from #7-#10)
-    ↓ (blocks)
-Issue #12: FluentIf
+Issue #12: FluentIf (independent from #7-#10)
 
+Example Execution Plan:
 Parallel Batch Layer 1: [#7]
 Parallel Batch Layer 2: [#8, #11]
 Parallel Batch Layer 3: [#9, #12]
 Parallel Batch Layer 4: [#10]
 ```
+
+### Actual PureSharp v1.0 Structure
+
+In PureSharp v1.0 roadmap:
+- All issues #7-#18 have parent issue #6 (the roadmap)
+- Actual dependencies may be different from sequential examples above
+- Always analyze actual GitHub issue metadata for real dependency structure
 
 ## Issue Metadata Format
 

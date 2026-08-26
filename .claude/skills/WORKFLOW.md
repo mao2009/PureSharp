@@ -229,20 +229,18 @@ Recommendation: SEQUENTIAL EXECUTION (dependencies)
 ### Example 1: Execute Single Issue (Batch of 1)
 
 ```bash
-# Issue #7 only
-/kiro:batch-init "Issue #7" --issues 7
+# Analyze Issue #7 for execution
+/batch-skill analyze --issues 7
 
-# Analyzes if #7 has blockers
-# Output: No dependencies, can execute immediately
+# Output: Dependency analysis, execution readiness
+# → Use /kiro-spec-quick #7 for implementation
 
-# Implementation
-/kiro-spec-quick #7
+# When PR is created and ready:
+/merge-skill verify --pr 121
 
-# When PR #121 is ready:
-/kiro:merge-init --pr 121
-/kiro:merge-verify
-/kiro:merge-execute
-/kiro:merge-report --format human
+# Review verification report (CONFIRMED/INFERRED/UNVERIFIED)
+# → If SAFE, manually merge using git
+# → Then run post-merge verification
 ```
 
 ### Example 2: Execute Multiple Independent Issues
