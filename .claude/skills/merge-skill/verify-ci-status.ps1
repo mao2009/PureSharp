@@ -295,8 +295,16 @@ if ($runs.Count -gt 0 -and $result.workflow.Count -eq 0) {
 # ---------------------------------------------------------------------------
 # 4. Optional wait for CI completion
 # ---------------------------------------------------------------------------
+# KNOWN LIMITATION (Phase 2 - CI polling refresh):
+# The gate evaluation in section 5 reads $result.workflow, which was captured in section 3
+# BEFORE this loop runs. Waiting therefore cannot turn a pending workflow into a passing
+# gate within a single invocation - a run that was 'in_progress' at snapshot time still
+# blocks. This fails CLOSED (it can never turn a blocked verdict into a pass), so it is a
+# usability limit, not a safety hole. Until it is fixed, re-run the script after CI
+# finishes rather than relying on -Wait to produce a passing verdict.
 if ($Wait) {
     Write-Host "Waiting for CI completion (timeout: $TimeoutMinutes min)..." -ForegroundColor Cyan
+    Write-Host "NOTE: -Wait cannot upgrade a blocked verdict in this run; re-run after CI finishes." -ForegroundColor DarkGray
 
     $startTime = Get-Date
     $timeout = New-TimeSpan -Minutes $TimeoutMinutes

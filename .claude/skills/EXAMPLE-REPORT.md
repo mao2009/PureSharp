@@ -235,6 +235,18 @@ Evidence verified via Git CLI, GitHub API, or build artifacts.
 - **main Branch**: Synchronized with origin/main
 - **Feature Branches**: Synchronized before merge
 
+#### File Conflict Analysis (Verified via `git diff --name-only` per branch)
+The batch conflict gate requires CONFIRMED evidence, so the file sets below were read
+from the actual branch diffs, not inferred from issue descriptions:
+- **Issue #7** modifies: `Analyzer.cs`, `DiagnosticCatalog.cs`, localization files
+- **Issue #8** modifies: `Tests/`, `TestData/`, `TestBase.cs` (no overlap with #7)
+- **Issue #9** modifies: `ReferentialTransparencyAnalyzer.cs`, `SemanticAnalyzer.cs` (no overlap with #7, #8)
+- **Issue #10** modifies: `InterproceduralAnalyzer.cs`, `CallGraphBuilder.cs` (no overlap with #7-#9)
+- **Shared config touched by >1 issue**: none
+- **Shared API contract touched by >1 issue**: none
+- **Conclusion**: No file conflicts — CONFIRMED. This is the evidence that satisfied
+  the conflict gate.
+
 ### INFERRED
 Reasonable conclusions from confirmed evidence, stated explicitly.
 
@@ -242,13 +254,6 @@ Reasonable conclusions from confirmed evidence, stated explicitly.
 the merge gate or the batch conflict gate; those were satisfied by the CONFIRMED
 evidence above. INFERRED items are recorded for context only, and would force SERIAL
 execution (never parallel) had they been load-bearing.
-
-- **No File Conflicts**: Inferred from commit history analysis
-  - Issue #7 modifies: Analyzer.cs, DiagnosticCatalog.cs, localization files
-  - Issue #8 modifies: Tests/, TestData/, TestBase.cs (no overlap with #7)
-  - Issue #9 modifies: ReferentialTransparencyAnalyzer.cs, SemanticAnalyzer.cs (no overlap with #7, #8)
-  - Issue #10 modifies: InterproceduralAnalyzer.cs, CallGraphBuilder.cs (no overlap with #7-#9)
-  - **Conclusion**: Safe to merge sequentially without conflicts
 
 - **Dependency Chain Satisfied**: Inferred from execution order
   - Issue #7 (no dependencies) completed first ✓

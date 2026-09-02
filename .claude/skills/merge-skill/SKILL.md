@@ -157,19 +157,27 @@ Gates are split into two distinct layers. Passing layer 1 does **not** authorize
 
 **TECHNICAL GATES PASSED** requires ALL of:
 
-```
-✓ Branch verified (current, tracked correctly)
-✓ Base commit confirmed (git rev-parse origin/main)
-✓ Result commit confirmed (git rev-parse HEAD)
-✓ Working tree clean (git status --porcelain empty)
-✓ Build succeeded (dotnet build exit 0)
-✓ Relevant tests passed (test runner exit 0)
-✓ CI completed successfully at the current PR HEAD (CI headSha == PR headRefOid)
-✓ PR exists and mergeable (gh pr view --json mergeStateStatus)
-✓ No file conflicts with concurrent changes (CONFIRMED only)
-✓ Target branch HEAD unchanged since PR creation
-✓ Effective approvals >= requiredApprovals (from config, HEAD-bound, bots excluded)
-```
+Each gate below names the script that actually enforces it. A gate marked
+**NOT SCRIPTED** must be established by the operator before the gate set is considered
+satisfied — no script checks it, so it can never be reported as automatically CONFIRMED.
+
+| Gate | Enforced by |
+|------|-------------|
+| Branch verified (current, tracked correctly) | `verify-git-state.ps1` |
+| Base commit confirmed (`git rev-parse origin/main`) | `verify-git-state.ps1` |
+| Result commit confirmed (`git rev-parse HEAD`) | `verify-git-state.ps1` |
+| Working tree clean (`git status --porcelain` empty) | `verify-git-state.ps1` |
+| Build succeeded (`dotnet build` exit 0) | `verify-build-and-tests.ps1` |
+| Relevant tests passed (test runner exit 0) | `verify-build-and-tests.ps1` |
+| CI completed successfully at the current PR HEAD (CI `headSha` == PR `headRefOid`) | `verify-ci-status.ps1` |
+| PR exists and mergeable (`gh pr view --json mergeStateStatus`) | `verify-ci-status.ps1` |
+| Effective approvals >= `requiredApprovals` (config-driven, HEAD-bound, bots excluded) | `verify-ci-status.ps1` |
+| No file conflicts with concurrent changes (CONFIRMED only) | **NOT SCRIPTED** — manual, CONFIRMED evidence required |
+| Target branch HEAD unchanged since PR creation | **NOT SCRIPTED** (Phase 2) — manual re-check required |
+
+Running the three scripts covers only the scripted rows. The two NOT SCRIPTED rows are
+the operator's responsibility; treating them as passed without CONFIRMED evidence
+defeats the gate.
 
 Result of layer 1 passing: the PR becomes a **MERGE CANDIDATE**. Nothing is merged.
 

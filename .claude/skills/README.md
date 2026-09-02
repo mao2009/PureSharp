@@ -38,7 +38,10 @@ Two primary skills orchestrate the development workflow:
 
 ### For Merge (Human Approval Always Required)
 
-```powershell
+Claude Code skill directives (`/merge-skill ...`) are shown alongside the shell commands
+they lead to; only the `git` lines are shell commands.
+
+```text
 # VERIFY (verification-only, no changes made)
 /merge-skill verify --pr 123 --details
 
