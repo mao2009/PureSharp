@@ -39,23 +39,25 @@ Two primary skills orchestrate the development workflow:
 ### For Merge (Human Approval Always Required)
 
 ```powershell
-# Step 1: Verify merge gates (verification-only, no changes made)
+# VERIFY (verification-only, no changes made)
 /merge-skill verify --pr 123 --details
 
-# Step 2: HUMAN REVIEWS REPORT
+# ALL REQUIRED GATES PASS -> MERGE CANDIDATE
+# The PR is a candidate only. Nothing has been merged.
+
+# HUMAN REVIEW
 # - Examine CONFIRMED items
-# - Verify no UNVERIFIED or BLOCKED items
-# - Make explicit merge decision
+# - Verify no INFERRED, UNVERIFIED or BLOCKED items
 
-# Step 3: EXPLICIT HUMAN APPROVAL REQUIRED
-# Only proceed if human approves after reviewing step 1 report
+# EXPLICIT HUMAN APPROVAL (required)
+# Only proceed if a human explicitly approves merging this specific HEAD.
 
-# Step 4: Manual merge execution (human performs)
+# MERGE EXECUTION (human performs)
 git checkout main
 git merge --ff-only feature/issue-NNN
 git push origin main
 
-# Step 5: Post-merge verification (automated)
+# POST-MERGE VERIFY (automated)
 /merge-skill verify --pr 123 --post-merge
 ```
 
@@ -78,7 +80,9 @@ Human approval is always required before merge execution.
 │   │   ├── SKILL.md (Merge Skill specification)
 │   │   ├── verify-git-state.ps1 (Git verification script)
 │   │   ├── verify-build-and-tests.ps1 (Build/test verification)
-│   │   └── verify-ci-status.ps1 (CI verification)
+│   │   ├── verify-ci-status.ps1 (CI + approval verification)
+│   │   ├── approval-lib.ps1 (approval semantics + config loader)
+│   │   └── test-approval-logic.ps1 (approval logic tests)
 │   └── conventions/
 │       └── (commit message rules, etc.)
 ├── projects/
@@ -133,10 +137,26 @@ Runs local build and tests
 ```
 
 ### verify-ci-status.ps1
-Checks GitHub Actions CI status
+Checks GitHub Actions CI status and effective human approvals, both bound to the
+current PR HEAD. Reads `approval.requiredApprovals` from `.kiro/merge.config.json`
+(no hardcoded fallback). Exits non-zero on MERGE BLOCKED or CONFIG ERROR.
 
 ```powershell
 .\.claude\skills\merge-skill\verify-ci-status.ps1 -PR 123
+.\.claude\skills\merge-skill\verify-ci-status.ps1 -PR 123 -Format json
+```
+
+### approval-lib.ps1
+Approval evaluation library dot-sourced by `verify-ci-status.ps1`. Holds the
+per-reviewer latest-state logic, bot exclusion, HEAD binding, and config loading.
+
+### test-approval-logic.ps1
+Fixture-based tests for the approval semantics that cannot be reproduced on a live PR
+(duplicate approvals, approval-then-changes-requested, bot approvals, stale approvals,
+config validation).
+
+```powershell
+.\.claude\skills\merge-skill\test-approval-logic.ps1
 ```
 
 ## Evidence Classification
@@ -148,6 +168,10 @@ All reports use three evidence types:
 | **CONFIRMED** | Verified via Git/CLI/API/test | `git status` returns clean |
 | **INFERRED** | Reasonable from evidence | No conflicts (from file analysis) |
 | **UNVERIFIED** | Not yet checked | "CI probably passing" |
+
+**Gate policy**: only CONFIRMED evidence satisfies a gate.
+INFERRED and UNVERIFIED both BLOCK — for merge gates, for batch conflict gates, and
+for batch parallel-safety decisions. There is no "analysis-based" pass.
 
 **Golden Rule**: Never claim success for something you haven't verified.
 
@@ -187,9 +211,17 @@ Issue Selection
     ↓
 Create PR (automatic or manual)
     ↓
-/kiro:merge-verify (gate check)
+/kiro:merge-verify (VERIFY -> ALL REQUIRED GATES PASS)
     ↓
-/kiro:merge-execute (safe merge)
+MERGE CANDIDATE
+    ↓
+HUMAN REVIEW
+    ↓
+EXPLICIT HUMAN APPROVAL
+    ↓
+/kiro:merge-execute (MERGE EXECUTION)
+    ↓
+POST-MERGE VERIFY
     ↓
 /kiro:batch-report (final report)
 ```
@@ -198,9 +230,27 @@ See `WORKFLOW.md` for complete workflow examples.
 
 ## Safety Guarantees
 
+### Canonical Merge Boundary
+
+```text
+VERIFY
+    ↓
+ALL REQUIRED GATES PASS
+    ↓
+MERGE CANDIDATE
+    ↓
+HUMAN REVIEW
+    ↓
+EXPLICIT HUMAN APPROVAL
+    ↓
+MERGE EXECUTION
+    ↓
+POST-MERGE VERIFY
+```
+
 ### Merge Gate Requirements
 
-Merge only executes when ALL conditions are CONFIRMED:
+**Layer 1 — technical gates (automated).** All must be CONFIRMED:
 
 - [x] Git branch verified
 - [x] Base commit confirmed
@@ -208,10 +258,20 @@ Merge only executes when ALL conditions are CONFIRMED:
 - [x] Working tree clean
 - [x] Build succeeded
 - [x] Tests passed
-- [x] CI completed successfully
+- [x] CI completed successfully at the current PR HEAD
 - [x] PR exists and is mergeable
-- [x] No file conflicts
-- [x] All approvals met
+- [x] No file conflicts (CONFIRMED only; INFERRED/UNVERIFIED blocks)
+- [x] Effective approvals >= `approval.requiredApprovals` from `.kiro/merge.config.json`
+      (HEAD-bound, per-reviewer latest state, bots excluded)
+
+Layer 1 passing makes the PR a **MERGE CANDIDATE**. It does not authorize a merge.
+
+**Layer 2 — human approval gate (manual, non-automatable):**
+
+- [ ] Human review of the verification report completed
+- [ ] Explicit human approval recorded for this HEAD
+
+**MERGE GATE PASSED** = Layer 1 PASSED **and** Layer 2 PASSED.
 
 If ANY item is unverified or failed: **MERGE BLOCKED**
 
@@ -249,9 +309,15 @@ Create PRs for each completed issue (automatic with Kiro specs).
 For each PR:
 ```bash
 /kiro:merge-init --pr <number>
-/kiro:merge-verify
-/kiro:merge-execute
+/kiro:merge-verify            # VERIFY -> ALL REQUIRED GATES PASS -> MERGE CANDIDATE
+#                             # HUMAN REVIEW
+#                             # EXPLICIT HUMAN APPROVAL  <-- required, no automated substitute
+/kiro:merge-execute           # MERGE EXECUTION
+/kiro:merge-verify --pr <number> --post-merge   # POST-MERGE VERIFY
 ```
+
+Passing the gates produces a MERGE CANDIDATE, not a merge.
+Never run `/kiro:merge-execute` without explicit human approval for that specific HEAD.
 
 ### Step 5: Report
 After all issues merged:

@@ -121,14 +121,23 @@ Jobs:
 ```
 
 ### PR Approvals
-✅ **ALL APPROVED**
+✅ **ALL APPROVED** (effective human approvals, bound to each PR HEAD, bots excluded)
 
 ```
-PR #121: Approved by @code-reviewer-1
-PR #122: Approved by @code-reviewer-1
-PR #123: Approved by @code-reviewer-2
-PR #124: Approved by @code-reviewer-2
+Required approvals: 1 (source: .kiro/merge.config.json -> approval.requiredApprovals)
+
+PR #121: 1/1 - @code-reviewer-1 (approved HEAD abc1234)
+PR #122: 1/1 - @code-reviewer-1 (approved HEAD bcd2345)
+PR #123: 1/1 - @code-reviewer-2 (approved HEAD cde3456)
+PR #124: 1/1 - @code-reviewer-2 (approved HEAD def4567)
+
+Stale approvals ignored: 0
+Bot reviews excluded: 4 (coderabbitai, not counted as human approval)
 ```
+
+Each of these is a GitHub review approval satisfying the layer 1 technical gate.
+The separate layer 2 EXPLICIT HUMAN APPROVAL to execute each merge is recorded in
+the Merge Gate Summary below.
 
 ## Merge Status
 
@@ -228,6 +237,11 @@ Evidence verified via Git CLI, GitHub API, or build artifacts.
 
 ### INFERRED
 Reasonable conclusions from confirmed evidence, stated explicitly.
+
+**INFERRED evidence never satisfies a gate.** Nothing in this section was used to pass
+the merge gate or the batch conflict gate; those were satisfied by the CONFIRMED
+evidence above. INFERRED items are recorded for context only, and would force SERIAL
+execution (never parallel) had they been load-bearing.
 
 - **No File Conflicts**: Inferred from commit history analysis
   - Issue #7 modifies: Analyzer.cs, DiagnosticCatalog.cs, localization files
@@ -478,9 +492,18 @@ PR #124 (Issue #10):
 
 ## Merge Gate Summary
 
+### Canonical Merge Boundary
+
+```text
+VERIFY -> ALL REQUIRED GATES PASS -> MERGE CANDIDATE -> HUMAN REVIEW
+      -> EXPLICIT HUMAN APPROVAL -> MERGE EXECUTION -> POST-MERGE VERIFY
+```
+
 ### Merge Gate Checklist for Batch
 
-All gates passed for all issues:
+Layer 1 (technical gates) passed for all issues, making each PR a MERGE CANDIDATE.
+Layer 2 (explicit human approval) was then recorded separately for each PR before
+any merge was executed.
 
 ```
 Issue #7:
@@ -492,7 +515,12 @@ Issue #7:
 ✅ Tests passed
 ✅ CI completed
 ✅ PR mergeable
-→ MERGED
+✅ No file conflicts (CONFIRMED)
+✅ Effective approvals 1/1 (HEAD-bound, bots excluded)
+→ MERGE CANDIDATE
+✅ HUMAN REVIEW completed
+✅ EXPLICIT HUMAN APPROVAL recorded
+→ MERGE EXECUTION → MERGED → POST-MERGE VERIFY passed
 
 Issue #8:
 ✅ Branch verified
@@ -503,7 +531,12 @@ Issue #8:
 ✅ Tests passed
 ✅ CI completed
 ✅ PR mergeable
-→ MERGED
+✅ No file conflicts (CONFIRMED)
+✅ Effective approvals 1/1 (HEAD-bound, bots excluded)
+→ MERGE CANDIDATE
+✅ HUMAN REVIEW completed
+✅ EXPLICIT HUMAN APPROVAL recorded
+→ MERGE EXECUTION → MERGED → POST-MERGE VERIFY passed
 
 Issue #9:
 ✅ Branch verified
@@ -514,7 +547,12 @@ Issue #9:
 ✅ Tests passed
 ✅ CI completed
 ✅ PR mergeable
-→ MERGED
+✅ No file conflicts (CONFIRMED)
+✅ Effective approvals 1/1 (HEAD-bound, bots excluded)
+→ MERGE CANDIDATE
+✅ HUMAN REVIEW completed
+✅ EXPLICIT HUMAN APPROVAL recorded
+→ MERGE EXECUTION → MERGED → POST-MERGE VERIFY passed
 
 Issue #10:
 ✅ Branch verified
@@ -525,7 +563,12 @@ Issue #10:
 ✅ Tests passed
 ✅ CI completed
 ✅ PR mergeable
-→ MERGED
+✅ No file conflicts (CONFIRMED)
+✅ Effective approvals 1/1 (HEAD-bound, bots excluded)
+→ MERGE CANDIDATE
+✅ HUMAN REVIEW completed
+✅ EXPLICIT HUMAN APPROVAL recorded
+→ MERGE EXECUTION → MERGED → POST-MERGE VERIFY passed
 ```
 
 ## Final Assessment

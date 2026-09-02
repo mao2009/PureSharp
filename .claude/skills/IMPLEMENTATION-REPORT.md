@@ -47,15 +47,20 @@ Safely integrates changes with comprehensive verification:
 - Enforces merge gates
 - Executes safe merges
 
-**Usage**: `/kiro:merge-init --pr 123` → `/kiro:merge-verify` → `/kiro:merge-execute`
+**Usage**: `/kiro:merge-init --pr 123` → `/kiro:merge-verify` → MERGE CANDIDATE →
+HUMAN REVIEW → EXPLICIT HUMAN APPROVAL → `/kiro:merge-execute` → POST-MERGE VERIFY
 
 #### 3. Verification Scripts
 
-Three PowerShell scripts for automated verification:
+Five PowerShell files for automated verification:
 
 - **verify-git-state.ps1**: Git state verification (branch, commits, working tree, remote)
 - **verify-build-and-tests.ps1**: Local build and test execution
-- **verify-ci-status.ps1**: GitHub Actions CI status check
+- **verify-ci-status.ps1**: GitHub Actions CI status + effective human approval check
+  (both bound to the current PR HEAD)
+- **approval-lib.ps1**: Approval semantics library (per-reviewer latest state, bot
+  exclusion, HEAD binding) and `.kiro/merge.config.json` loader
+- **test-approval-logic.ps1**: Fixture-based tests for the approval semantics
 
 All scripts support JSON output for machine-readable results.
 
@@ -74,18 +79,48 @@ Both include comprehensive settings for v1.0.0 roadmap execution.
 
 #### 6. Safety Features
 
-**Merge Gate Requirements**:
+**Canonical Merge Boundary** (identical in README.md, WORKFLOW.md, and merge-skill/SKILL.md):
+
+```text
+VERIFY
+    ↓
+ALL REQUIRED GATES PASS
+    ↓
+MERGE CANDIDATE
+    ↓
+HUMAN REVIEW
+    ↓
+EXPLICIT HUMAN APPROVAL
+    ↓
+MERGE EXECUTION
+    ↓
+POST-MERGE VERIFY
+```
+
+**Merge Gate Requirements — Layer 1 (technical, automated)**:
 - Git branch and commits verified
 - Working tree clean confirmed
 - Build success confirmed
 - All tests passed confirmed
-- CI/CD pipeline completed confirmed
+- CI/CD pipeline completed at the current PR HEAD confirmed
 - PR exists and is mergeable confirmed
+- No file conflicts confirmed (CONFIRMED evidence only)
+- Effective approvals >= `approval.requiredApprovals` from `.kiro/merge.config.json`,
+  bound to the current PR HEAD, per-reviewer latest state, bots excluded
+
+Layer 1 passing yields a **MERGE CANDIDATE** — never a merge.
+
+**Merge Gate Requirements — Layer 2 (human, manual)**:
+- Human review of the verification report completed
+- Explicit human approval recorded for that specific HEAD
+
+**MERGE GATE PASSED** = Layer 1 PASSED **and** Layer 2 PASSED.
+No script in this repository executes a merge.
 
 **Evidence Classification**:
 - **CONFIRMED**: Verified via Git/CLI/API
-- **INFERRED**: Reasonable conclusion from evidence
-- **UNVERIFIED**: Not yet checked
+- **INFERRED**: Reasonable conclusion from evidence — **does not satisfy any gate**
+- **UNVERIFIED**: Not yet checked — **blocks**
 
 Never claims success without verification.
 
@@ -103,7 +138,9 @@ Never claims success without verification.
 │   │   ├── SKILL.md (450+ lines specification)
 │   │   ├── verify-git-state.ps1
 │   │   ├── verify-build-and-tests.ps1
-│   │   └── verify-ci-status.ps1
+│   │   ├── verify-ci-status.ps1
+│   │   ├── approval-lib.ps1
+│   │   └── test-approval-logic.ps1
 │   └── conventions/
 │       └── (placeholder for future guidelines)
 
@@ -112,7 +149,7 @@ Never claims success without verification.
 └── merge.config.json (configuration)
 ```
 
-**Total**: 10 files, ~2,900 lines of code/documentation
+**Total**: 12 files, ~3,300 lines of code/documentation
 
 ### Key Features
 
@@ -163,7 +200,7 @@ Phase 3 (Parallel then sequential):
 
 1. **Create PR**: Link this implementation to Issue #18
 2. **Code Review**: Have maintainer review the implementation
-3. **Merge**: Merge feature branch to main
+3. **Merge**: After EXPLICIT HUMAN APPROVAL, merge feature branch to main
 4. **Testing**: Execute Batch Skill on Phase 1 issues (#7-#10)
 5. **Validation**: Verify workflow with actual issues
 6. **Documentation**: Integrate with main README if needed
@@ -187,7 +224,7 @@ Phase 3 (Parallel then sequential):
 Verified through actual execution or inspection.
 
 #### Code Structure
-- **CONFIRMED**: All 10 files created successfully (verified via directory listing)
+- **CONFIRMED**: All 12 files created successfully (verified via directory listing)
   - `.claude/skills/batch-skill/SKILL.md` exists
   - `.claude/skills/merge-skill/SKILL.md` exists
   - 3 verification scripts created
@@ -443,7 +480,11 @@ See `.kiro/batch.config.json` for actual JSON configuration.
 
 Configuration file with settings for:
 - Merge strategy (fast-forward only)
-- PR approval requirements (1 approval)
+- PR approval requirements (`approval.requiredApprovals`, default 1) — read directly by
+  `verify-ci-status.ps1`; there is no hardcoded fallback, and a config error blocks the merge
+- Approval key status: `requiredApprovals` ENFORCED, `requirePRApproval` ENFORCED
+  (must be `true`), `requireCodeOwnerApproval` NOT YET ENFORCED (Phase 2, must be `false`),
+  `dismissStaleReviews` IGNORED (approvals are always bound to the current PR HEAD)
 - Verification gates (git, build, test, CI, PR)
 - Reporting (AI format with evidence classification)
 - Post-merge verification and cleanup
@@ -481,10 +522,11 @@ Status: READY
 
 ### verify-ci-status.ps1
 ```
-Lines: 150+
 Functions:
-  - PR information retrieval (gh pr view)
-  - CI workflow status (gh run list)
+  - Merge config load (fail-closed, no hardcoded requiredApprovals)
+  - PR information retrieval incl. headRefOid (gh pr view)
+  - Effective human approval evaluation (gh api graphql, HEAD-bound, bots excluded)
+  - CI workflow status filtered to runs matching PR HEAD (gh run list)
   - Merge state verification
   - Gate checking
   - Wait functionality with timeout

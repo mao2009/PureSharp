@@ -25,32 +25,61 @@ The Batch Skill orchestrates safe, parallel execution of multiple GitHub Issues 
 
 ### Parallel Execution Classification
 
-**Issues CANNOT run in parallel if:**
-- They modify the same file/directory (confirmed)
-- They modify the same architectural component (confirmed)
-- Dependency chain exists (confirmed)
-- API change + consumer change (confirmed)
-- Release/version issues (confirmed)
-- Conflict status is UNVERIFIED
+**Issues CANNOT run in parallel if ANY of the following holds:**
+- They modify the same file/directory
+- They modify the same architectural component
+- A dependency chain exists between them
+- API change + consumer change
+- Release/version issues
+- Shared configuration is touched by more than one issue
+- A shared API contract is touched by more than one issue
+- Execution order between them matters
+- **Dependency status is INFERRED**
+- **Dependency status is UNVERIFIED**
+- **Architectural coupling is unconfirmed**
+- Conflict status is INFERRED or UNVERIFIED
 
-**Issues CAN run in parallel if:**
-- Independent spec implementations (CONFIRMED: no file overlap)
-- Different diagnostic analyzers (CONFIRMED: different files)
-- Different documentation sections (CONFIRMED: different files)
-- Different test categories (CONFIRMED: different files)
+**Issues CAN run in parallel ONLY if ALL of the following are CONFIRMED:**
+
+- [ ] No file overlap (file-by-file diff/plan comparison, not naming heuristics)
+- [ ] No shared configuration touched by more than one issue
+- [ ] No shared API contract touched by more than one issue
+- [ ] No architectural dependency between the issues
+- [ ] Dependency graph fully resolved (every edge determined, none assumed)
+- [ ] No execution order dependency
+
+Every box must be CONFIRMED for the same pair of issues.
+A single INFERRED or UNVERIFIED box disqualifies parallel execution for that pair.
 
 **CRITICAL: Parallel Safety Must Be CONFIRMED**
 
-Do not assume parallel execution is safe based on analysis alone.
+File non-overlap alone is NOT sufficient to mark parallel safety as CONFIRMED.
+Two issues touching disjoint files can still conflict through shared configuration,
+a shared API contract, an architectural dependency, or a required execution order.
+
+"Different diagnostic analyzers" and "different files" are starting observations,
+not conclusions. They must be paired with the shared-config, shared-contract,
+architectural-dependency, and execution-order checks above before the pair can be
+classified CONFIRMED.
 
 Evidence Levels:
 
-- **CONFIRMED**: File-by-file analysis shows no conflicts
-- **INFERRED**: Design suggests no conflicts (not sufficient for parallel)
-- **UNVERIFIED**: Cannot determine conflict status
+- **CONFIRMED**: Every checklist item above verified directly (file lists, config
+  references, contract references, dependency graph)
+- **INFERRED**: Design or naming suggests no conflicts, but at least one checklist
+  item was reasoned about rather than verified
+- **UNVERIFIED**: At least one checklist item could not be determined
 
-Parallel execution requires CONFIRMED evidence.
-If conflict status is UNVERIFIED or INFERRED, use SERIAL EXECUTION.
+Execution policy by evidence level:
+
+| Evidence level | Execution |
+|----------------|-----------|
+| CONFIRMED      | PARALLEL permitted |
+| INFERRED       | SERIAL (parallel forbidden) |
+| UNVERIFIED     | SERIAL, or BLOCKED if the unknown affects correctness |
+
+Parallel execution requires CONFIRMED evidence for every checklist item.
+Never promote INFERRED to CONFIRMED because "a conflict seems unlikely".
 
 ### Execution Order Determination
 
@@ -235,9 +264,22 @@ For each issue:
 - [ ] CI passed (CONFIRMED)
 - [ ] PR exists and is mergeable (CONFIRMED)
 - [ ] No uncommitted changes (CONFIRMED)
-- [ ] No file conflicts with other batch issues (CONFIRMED or analysis-based)
+- [ ] No file conflicts with other batch issues (CONFIRMED)
+- [ ] Explicit human approval recorded for the merge (CONFIRMED)
 
-If any check is UNVERIFIED or BLOCKED, report as **BATCH GATE BLOCKED**.
+Analysis-based / inferred evidence does NOT satisfy the conflict gate:
+
+| Conflict evidence | Batch gate |
+|-------------------|------------|
+| CONFIRMED         | may pass |
+| INFERRED          | **BATCH GATE BLOCKED** |
+| UNVERIFIED        | **BATCH GATE BLOCKED** |
+
+If any check is INFERRED, UNVERIFIED, or BLOCKED, report as **BATCH GATE BLOCKED**.
+
+Passing every box above makes the batch a MERGE CANDIDATE only.
+Merge execution still requires explicit human approval - see
+`.claude/skills/merge-skill/SKILL.md`.
 
 ## Configuration
 

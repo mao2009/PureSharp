@@ -89,18 +89,52 @@ Recommendation: SEQUENTIAL EXECUTION (dependencies)
 
 ### Phase 3: Merge Verification & Integration
 
+**Canonical merge boundary** — every step below follows this sequence, without exception:
+
+```text
+VERIFY
+    ↓
+ALL REQUIRED GATES PASS
+    ↓
+MERGE CANDIDATE
+    ↓
+HUMAN REVIEW
+    ↓
+EXPLICIT HUMAN APPROVAL
+    ↓
+MERGE EXECUTION
+    ↓
+POST-MERGE VERIFY
+```
+
 **For each completed issue (or batch)**:
 
 ```bash
-# Verify merge gates
+# VERIFY (automated, read-only)
 /kiro:merge-init --pr 123
 /kiro:merge-verify --details
 
-# Execute merge (if gates pass)
+# ALL REQUIRED GATES PASS -> the PR is now a MERGE CANDIDATE.
+# Nothing has been merged. Passing gates is NOT authorization to merge.
+
+# HUMAN REVIEW (manual)
+#   - Read the verification report end to end
+#   - Confirm every gate item is CONFIRMED
+#   - Confirm there are no INFERRED or UNVERIFIED gate items
+
+# EXPLICIT HUMAN APPROVAL (manual, REQUIRED)
+#   - A human explicitly approves merging this specific HEAD.
+#   - There is no automated substitute for this step.
+#   - Without it, STOP here. Do not run merge-execute.
+
+# MERGE EXECUTION (only after explicit human approval above)
 /kiro:merge-execute
+
+# POST-MERGE VERIFY (automated)
+/kiro:merge-verify --pr 123 --post-merge
 ```
 
-**Merge Gate Checklist** (automated verification):
+**Layer 1 — Technical Gate Checklist** (automated verification):
 
 - [x] Git branch verified
 - [x] Base commit confirmed
@@ -108,10 +142,20 @@ Recommendation: SEQUENTIAL EXECUTION (dependencies)
 - [x] Working tree clean
 - [x] Build success
 - [x] Tests passed
-- [x] CI completed
+- [x] CI completed at the current PR HEAD (CI headSha == PR headRefOid)
 - [x] PR mergeable
-- [x] No file conflicts
-- [x] All gates passed
+- [x] No file conflicts (CONFIRMED only; INFERRED/UNVERIFIED blocks)
+- [x] Effective approvals >= requiredApprovals (from `.kiro/merge.config.json`,
+      bound to PR HEAD, bots excluded)
+- [x] All technical gates passed → **MERGE CANDIDATE**
+
+**Layer 2 — Human Approval Gate** (manual, non-automatable):
+
+- [ ] Human review of the verification report completed
+- [ ] Explicit human approval recorded for this HEAD
+
+**MERGE GATE PASSED** = Layer 1 PASSED **and** Layer 2 PASSED.
+Layer 1 alone never authorizes a merge.
 
 ### Phase 4: Reporting
 
@@ -238,8 +282,9 @@ Recommendation: SEQUENTIAL EXECUTION (dependencies)
 # When PR is created and ready:
 /merge-skill verify --pr 121
 
-# Review verification report (CONFIRMED/INFERRED/UNVERIFIED)
-# → If SAFE, manually merge using git
+# HUMAN REVIEW of the verification report (CONFIRMED/INFERRED/UNVERIFIED)
+# → If MERGE CANDIDATE: give EXPLICIT HUMAN APPROVAL, then manually merge using git
+# → If BLOCKED: fix and re-verify. Never merge a BLOCKED PR.
 # → Then run post-merge verification
 ```
 
@@ -259,11 +304,16 @@ Recommendation: SEQUENTIAL EXECUTION (dependencies)
 # When both PRs ready:
 /kiro:batch-verify
 
-# Merge both (can merge independently)
+# Merge both (can merge independently).
+# Each merge-execute below is preceded by HUMAN REVIEW + EXPLICIT HUMAN APPROVAL.
 /kiro:merge-init --pr 131
+/kiro:merge-verify --details
+# → MERGE CANDIDATE → HUMAN REVIEW → EXPLICIT HUMAN APPROVAL
 /kiro:merge-execute
 
 /kiro:merge-init --pr 132
+/kiro:merge-verify --details
+# → MERGE CANDIDATE → HUMAN REVIEW → EXPLICIT HUMAN APPROVAL
 /kiro:merge-execute
 
 # Final report
@@ -284,6 +334,8 @@ Recommendation: SEQUENTIAL EXECUTION (dependencies)
 
 # Wait for #9 to merge
 /kiro:merge-init --pr 129
+/kiro:merge-verify --details
+# → MERGE CANDIDATE → HUMAN REVIEW → EXPLICIT HUMAN APPROVAL
 /kiro:merge-execute
 
 # Layer 2: Execute #10 (now can start since #9 merged)
@@ -291,6 +343,8 @@ Recommendation: SEQUENTIAL EXECUTION (dependencies)
 
 # Merge #10
 /kiro:merge-init --pr 130
+/kiro:merge-verify --details
+# → MERGE CANDIDATE → HUMAN REVIEW → EXPLICIT HUMAN APPROVAL
 /kiro:merge-execute
 ```
 
@@ -384,21 +438,36 @@ Create `.kiro/batch.config.json`:
 
 ### Merge Configuration
 
-Create `.kiro/merge.config.json`:
+`.kiro/merge.config.json` is read directly by the verification scripts - the approval
+gate is never hardcoded. Relevant excerpt (see the full file for all sections):
 
 ```json
 {
-  "baseBranch": "main",
-  "requireFastForward": false,
-  "requirePRApproval": true,
-  "requiredApprovals": 1,
-  "ciTimeoutMinutes": 30,
-  "postMergeVerification": true,
-  "autoCleanupBranch": true,
-  "verificationReportFormat": "ai",
-  "failureMode": "block"
+  "merge": {
+    "baseBranch": "main",
+    "requireFastForward": false,
+    "enableAutoMerge": false
+  },
+  "approval": {
+    "requirePRApproval": true,
+    "requiredApprovals": 1,
+    "requireCodeOwnerApproval": false,
+    "dismissStaleReviews": false
+  },
+  "verification": {
+    "ciVerification": { "ciTimeoutMinutes": 30 }
+  }
 }
 ```
+
+Approval key status in Phase 1:
+
+| Key | Status |
+|-----|--------|
+| `requiredApprovals` | **ENFORCED** (read from config; config error = MERGE BLOCKED) |
+| `requirePRApproval` | **ENFORCED** (must be `true`; `false` is NOT SUPPORTED) |
+| `requireCodeOwnerApproval` | **NOT YET ENFORCED** (Phase 2; must be `false`) |
+| `dismissStaleReviews` | **IGNORED** (approvals are always bound to the current PR HEAD) |
 
 ## Verification Scripts
 
@@ -491,9 +560,17 @@ Issue Selection
     ↓
 Create PR (automatic or manual)
     ↓
-/kiro:merge-verify (gate check)
+/kiro:merge-verify (VERIFY -> ALL REQUIRED GATES PASS)
     ↓
-/kiro:merge-execute (safe merge)
+MERGE CANDIDATE
+    ↓
+HUMAN REVIEW
+    ↓
+EXPLICIT HUMAN APPROVAL
+    ↓
+/kiro:merge-execute (MERGE EXECUTION)
+    ↓
+POST-MERGE VERIFY
     ↓
 /kiro:batch-report (final report)
 ```
