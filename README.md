@@ -104,13 +104,18 @@ PureSharp uses Roslyn's standard `.editorconfig` mechanism for configuring diagn
 
 | Diagnostic ID | Category | Title | Default Severity |
 |---|---|---|---|
-| **RT0001** | Purity | Static mutable field access | Error |
-| **RT0002** | Purity | Non-pure method call | Error |
-| **RT0003** | Purity | I/O operation | Error |
-| **LVP0001** | Purity | Reassignment to immutable local variable | Error |
-| **LVP0002** | Purity | Immutable local variable missing initializer | Error |
-| **LVP0003** | Naming | Naming suggestion for effectively immutable variables | Warning |
-| **FIF0001** | FluentIf | FluentIf chain not terminated with .Else() | Error |
+| **RT0001** | Purity | Static field access in [PureMethod] | Error |
+| **RT0002** | Purity | Non-pure method call in [PureMethod] | Error |
+| **RT0003** | Purity | I/O operation in [PureMethod] | Error |
+| **LVP0001** | Purity | Reassignment to immutable local variable prohibited | Error |
+| **LVP0002** | Purity | Mandatory initialization of immutable local variable | Error |
+| **LVP0003** | Naming | Suggestion to apply naming convention for immutable local variable | Warning |
+| **FIF0001** | FluentIf | FluentIf chain termination check | Error |
+
+The complete diagnostic contract — full message text, target conditions, the v1.0 public
+contract surface, ID naming and category policy, and the compatibility rules for adding
+or changing a diagnostic — is defined in [`docs/DIAGNOSTICS.md`](docs/DIAGNOSTICS.md),
+which is the single source of truth.
 
 ### Configuration Example
 
