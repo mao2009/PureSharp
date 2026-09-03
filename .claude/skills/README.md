@@ -1,430 +1,114 @@
 # PureSharp Batch & Merge Skills
 
-Welcome to the PureSharp Batch & Merge Skills system. This directory contains the infrastructure for safe, coordinated development of multiple GitHub Issues leading up to PureSharp v1.0.0.
+Two skills coordinate multi-issue development and safe integration for the PureSharp
+v1.0.0 roadmap.
 
-## Overview
+| Skill | Specification | Responsibility |
+|---|---|---|
+| **Batch Skill** | `batch-skill/SKILL.md` | Orchestrate multiple issues: dependencies, parallel safety, execution graph, aggregation |
+| **Merge Skill** | `merge-skill/SKILL.md` | Verify a PR against merge gates, enforce the human approval boundary, verify after merge |
 
-Two primary skills orchestrate the development workflow:
+## Scriptless by design
 
-1. **Batch Skill** (`.claude/skills/batch-skill/SKILL.md`)
-   - Orchestrates multiple related issues
-   - Analyzes dependencies
-   - Plans parallel execution
-   - Collects results
+Each `SKILL.md` is an **executable specification and the single source of truth** for its
+skill. There are no helper scripts, and none may be added as a requirement.
 
-2. **Merge Skill** (`.claude/skills/merge-skill/SKILL.md`)
-   - Verifies Git state
-   - Validates builds and tests
-   - Checks CI/CD pipelines
-   - Enforces merge gates
-   - Executes safe merges
+This is deliberate. The skills define **which facts must be established**, not **which
+commands to run** — so they carry no dependency on PowerShell version, shell dialect,
+path separator, file encoding, exit-code convention, or any one CLI being installed.
 
-## Quick Start
+They run unchanged on Windows, Linux, macOS, and WSL. No PowerShell, Bash, Python, or
+Node runtime is required.
 
-### For Batch Execution
+Establish each fact with whichever trusted source the environment offers — a GitHub
+connector, `gh`, the GitHub API, `git` for local facts, or the repository's own build and
+test tooling. If **no** available source can establish a required fact, the result is
+**UNVERIFIED**, and UNVERIFIED blocks. Skipping a check because a tool is missing is
+never acceptable.
 
-```bash
-# Analyze issues for batch execution
-/kiro:batch-init "v1.0 Phase 1" --issues 7,8,9,10
+Porting the removed helper scripts into another language would reintroduce exactly the
+coupling this design removes, and is not a valid change.
 
-# Execute per-issue implementation (using existing Kiro spec workflow)
-/kiro-spec-quick #7
-/kiro-spec-quick #8
-# etc.
+## Using the skills
 
-# Generate final report
-/kiro:batch-report --format both
-```
-
-### For Merge (Human Approval Always Required)
-
-Claude Code skill directives (`/merge-skill ...`) are shown alongside the shell commands
-they lead to; only the `git` lines are shell commands.
+Invoke a skill and follow its specification. The Merge Skill's default mode is
+verification only: it reads state, changes nothing, and is safe to run at any time.
 
 ```text
-# VERIFY (verification-only, no changes made)
-/merge-skill verify --pr 123 --details
-
-# ALL REQUIRED GATES PASS -> MERGE CANDIDATE
-# The PR is a candidate only. Nothing has been merged.
-
-# HUMAN REVIEW
-# - Examine CONFIRMED items
-# - Verify no INFERRED, UNVERIFIED or BLOCKED items
-
-# EXPLICIT HUMAN APPROVAL (required)
-# Only proceed if a human explicitly approves merging this specific HEAD.
-
-# MERGE EXECUTION (human performs)
-git checkout main
-git merge --ff-only feature/issue-NNN
-git push origin main
-
-# POST-MERGE VERIFY (automated)
-/merge-skill verify --pr 123 --post-merge
+Batch Skill   → analyse issues, decide execution order, run, aggregate, report
+Merge Skill   → verify a PR against the gates, report MERGE CANDIDATE or MERGE BLOCKED
 ```
 
-**CRITICAL**: Merge Skill does NOT auto-merge.
-GitHub's `mergeable=true` status does NOT mean merge automatically.
-Human approval is always required before merge execution.
+Neither skill merges anything on its own. See `WORKFLOW.md` for the end-to-end flow.
 
-## Files & Directories
+## Safety principles
 
-```text
-.claude/
-├── skills/
-│   ├── README.md (this file)
-│   ├── WORKFLOW.md (comprehensive workflow guide)
-│   ├── EXAMPLE-REPORT.md (sample report showing both layers)
-│   ├── batch-skill/
-│   │   ├── SKILL.md (Batch Skill specification)
-│   │   └── (implementation details)
-│   ├── merge-skill/
-│   │   ├── SKILL.md (Merge Skill specification)
-│   │   ├── verify-git-state.ps1 (Git verification script)
-│   │   ├── verify-build-and-tests.ps1 (Build/test verification)
-│   │   ├── verify-ci-status.ps1 (CI + approval verification)
-│   │   ├── approval-lib.ps1 (approval semantics + config loader)
-│   │   └── test-approval-logic.ps1 (approval logic tests)
-│   └── conventions/
-│       └── (commit message rules, etc.)
-├── projects/
-│   └── C--Users-Hobart-Documents-Projects-PureSharp/
-│       └── memory/ (project-specific memory)
-└── CLAUDE.md (global instructions)
+These are fixed policy. No configuration, flag, or argument relaxes them.
 
-.kiro/
-├── batch.config.json (Batch Skill configuration)
-├── merge.config.json (Merge Skill configuration)
-├── steering/ (project guidance documents)
-├── specs/ (individual issue specifications)
-└── settings/ (Kiro settings and templates)
-```
+1. **Fail closed.** Any error, ambiguity, or missing evidence blocks.
+2. **Explicit human approval before every merge.** Technical verification success is not
+   permission to merge.
+3. **Evidence is bound to an exact commit.** Stale evidence never satisfies a gate; a new
+   push invalidates all prior evidence, approvals included.
+4. **UNVERIFIED blocks. INFERRED never opens a gate.**
+5. **Parallel execution requires proof of safety**, not merely the absence of known
+   danger. Serial is the safe default.
+6. **Auto-merge is never enabled**; the base branch is never force-pushed or pushed to
+   directly.
+
+## Evidence classification
+
+Both skills use these three labels and no others.
+
+| Label | Meaning | May open a gate? |
+|---|---|---|
+| **CONFIRMED** | Actually observed from a trusted source this run | Yes |
+| **INFERRED** | Reasonable conclusion from confirmed facts, not itself observed | No — may only support a decision that fails safe |
+| **UNVERIFIED** | Not established, including "the tool was unavailable" | No — blocks |
+
+**Golden rule**: never claim success for something you have not verified.
 
 ## Configuration
 
-### Batch Configuration (`.kiro/batch.config.json`)
+Both configuration files carry **data only**. Behaviour lives in the `SKILL.md` files.
 
-Controls batch execution behavior:
-- Max parallel tasks
-- CI/CD timeouts
-- Failure handling
-- Reporting format
-- Roadmap phases
+| File | Keys |
+|---|---|
+| `.kiro/merge.config.json` | `requiredApprovals`, `mergeMethod`, `deleteBranchAfterMerge` |
+| `.kiro/batch.config.json` | `maxParallelTasks` |
 
-### Merge Configuration (`.kiro/merge.config.json`)
+A missing file, malformed JSON, an unknown key, or a value out of range is a **CONFIG
+ERROR** and blocks. Safety policy is deliberately absent from both schemas so it cannot
+be switched off, and configuration can only make a gate stricter, never weaker.
 
-Controls merge verification:
-- Base branch
-- Approval requirements
-- Gate enforcement
-- Build/test/CI timeouts
-- Post-merge verification
-
-## Verification Scripts
-
-Located in `.claude/skills/merge-skill/`:
-
-### verify-git-state.ps1
-Checks Git state: branch, commits, working tree, remote
-
-```powershell
-.\.claude\skills\merge-skill\verify-git-state.ps1 -Format text
-```
-
-### verify-build-and-tests.ps1
-Runs local build and tests
-
-```powershell
-.\.claude\skills\merge-skill\verify-build-and-tests.ps1 -Configuration Release
-```
-
-### verify-ci-status.ps1
-Checks GitHub Actions CI status and effective human approvals, both bound to the
-current PR HEAD. Reads `approval.requiredApprovals` from `.kiro/merge.config.json`
-(no hardcoded fallback). Exits non-zero on MERGE BLOCKED or CONFIG ERROR.
-
-```powershell
-.\.claude\skills\merge-skill\verify-ci-status.ps1 -PR 123
-.\.claude\skills\merge-skill\verify-ci-status.ps1 -PR 123 -Format json
-```
-
-### approval-lib.ps1
-Approval evaluation library dot-sourced by `verify-ci-status.ps1`. Holds the
-per-reviewer latest-state logic, bot exclusion, HEAD binding, and config loading.
-
-### test-approval-logic.ps1
-Fixture-based tests for the approval semantics that cannot be reproduced on a live PR
-(duplicate approvals, approval-then-changes-requested, bot approvals, stale approvals,
-config validation).
-
-```powershell
-.\.claude\skills\merge-skill\test-approval-logic.ps1
-```
-
-## Evidence Classification
-
-All reports use three evidence types:
-
-| Type | Definition | Example |
-|------|-----------|---------|
-| **CONFIRMED** | Verified via Git/CLI/API/test | `git status` returns clean |
-| **INFERRED** | Reasonable from evidence | No conflicts (from file analysis) |
-| **UNVERIFIED** | Not yet checked | "CI probably passing" |
-
-**Gate policy**: only CONFIRMED evidence satisfies a gate.
-INFERRED and UNVERIFIED both BLOCK — for merge gates, for batch conflict gates, and
-for batch parallel-safety decisions. There is no "analysis-based" pass.
-
-**Golden Rule**: Never claim success for something you haven't verified.
-
-## Two-Layer Reporting
-
-### Human Report
-Executive summary for stakeholders:
-- What changed
-- Success/failure status
-- Key metrics
-- Next steps
-
-**Example**: `EXAMPLE-REPORT.md` - "Human Report" section
-
-### AI Report
-Detailed technical report with full evidence:
-- Verified evidence (CONFIRMED)
-- Inferred conclusions (INFERRED)
-- Unverified items (UNVERIFIED)
-- Git state per issue
-- Build/test results
-- CI/CD status
-- PR status
-
-**Example**: `EXAMPLE-REPORT.md` - "AI Report" section
-
-## Integration with Kiro Specs
-
-The Batch & Merge Skills integrate seamlessly with existing Kiro spec workflow:
+## Files
 
 ```text
-Issue Selection
-    ↓
-/kiro:batch-init (analyze dependencies)
-    ↓
-/kiro-spec-quick (implement per issue)
-    ↓
-Create PR (automatic or manual)
-    ↓
-/kiro:merge-verify (VERIFY -> ALL REQUIRED GATES PASS)
-    ↓
-MERGE CANDIDATE
-    ↓
-HUMAN REVIEW
-    ↓
-EXPLICIT HUMAN APPROVAL
-    ↓
-/kiro:merge-execute (MERGE EXECUTION)
-    ↓
-POST-MERGE VERIFY
-    ↓
-/kiro:batch-report (final report)
+.claude/skills/
+├── README.md              (this file — overview, invocation, safety principles)
+├── WORKFLOW.md            (end-to-end workflow: batch → PR → review → merge)
+├── EXAMPLE-REPORT.md      (reporting example)
+├── batch-skill/
+│   └── SKILL.md           (batch specification — SSOT)
+└── merge-skill/
+    └── SKILL.md           (merge specification — SSOT)
+
+.kiro/
+├── batch.config.json
+└── merge.config.json
 ```
 
-See `WORKFLOW.md` for complete workflow examples.
+## Project context
 
-## Safety Guarantees
+The skills support the PureSharp v1.0.0 roadmap tracked in **Issue #6**. The roadmap's
+phases, issue membership, and target dates live in the GitHub issues — deliberately not
+duplicated here, where a second copy would silently go stale.
 
-### Canonical Merge Boundary
+## See also
 
-```text
-VERIFY
-    ↓
-ALL REQUIRED GATES PASS
-    ↓
-MERGE CANDIDATE
-    ↓
-HUMAN REVIEW
-    ↓
-EXPLICIT HUMAN APPROVAL
-    ↓
-MERGE EXECUTION
-    ↓
-POST-MERGE VERIFY
-```
-
-### Merge Gate Requirements
-
-**Layer 1 — technical gates (automated).** All must be CONFIRMED:
-
-- [x] Git branch verified
-- [x] Base commit confirmed
-- [x] Result commit confirmed
-- [x] Working tree clean
-- [x] Build succeeded
-- [x] Tests passed
-- [x] CI completed successfully at the current PR HEAD
-- [x] PR exists and is mergeable
-- [x] No file conflicts (CONFIRMED only; INFERRED/UNVERIFIED blocks)
-- [x] Effective approvals >= `approval.requiredApprovals` from `.kiro/merge.config.json`
-      (HEAD-bound, per-reviewer latest state, bots excluded)
-
-Layer 1 passing makes the PR a **MERGE CANDIDATE**. It does not authorize a merge.
-
-**Layer 2 — human approval gate (manual, non-automatable):**
-
-- [ ] Human review of the verification report completed
-- [ ] Explicit human approval recorded for this HEAD
-
-**MERGE GATE PASSED** = Layer 1 PASSED **and** Layer 2 PASSED.
-
-If ANY item is unverified or failed: **MERGE BLOCKED**
-
-### Failure Scenarios
-
-The skills handle failure gracefully:
-
-- **Build Failed**: Report error, block merge, suggest fixes
-- **Tests Failed**: Report failures, block merge, provide diagnostics
-- **CI Pending**: Wait or timeout, report status
-- **Merge Conflict**: Report conflict, suggest rebase
-- **Approval Missing**: Report requirement, block merge
-
-See `WORKFLOW.md` for detailed failure handling.
-
-## Recommended Workflow
-
-### Step 1: Plan the Batch
-```bash
-/kiro:batch-init "v1.0 Phase N" --issues <numbers>
-```
-
-Review dependency graph and execution plan.
-
-### Step 2: Implement Issues
-For each issue in recommended order:
-```bash
-/kiro-spec-quick #<issue>
-```
-
-### Step 3: Create PRs
-Create PRs for each completed issue (automatic with Kiro specs).
-
-### Step 4: Verify Merges
-For each PR:
-```bash
-/kiro:merge-init --pr <number>
-/kiro:merge-verify            # VERIFY -> ALL REQUIRED GATES PASS -> MERGE CANDIDATE
-#                             # HUMAN REVIEW
-#                             # EXPLICIT HUMAN APPROVAL  <-- required, no automated substitute
-/kiro:merge-execute           # MERGE EXECUTION
-/kiro:merge-verify --pr <number> --post-merge   # POST-MERGE VERIFY
-```
-
-Passing the gates produces a MERGE CANDIDATE, not a merge.
-Never run `/kiro:merge-execute` without explicit human approval for that specific HEAD.
-
-### Step 5: Report
-After all issues merged:
-```bash
-/kiro:batch-report --format both
-```
-
-## Troubleshooting
-
-### Issue: "Branch not found"
-- Verify feature branch exists
-- Check branch name matches issue number
-- Recreate from latest main if needed
-
-### Issue: "Build failed"
-- Run `dotnet build --configuration Release`
-- Fix compilation errors
-- Push fix to feature branch
-- Rerun merge-verify
-
-### Issue: "Tests failed"
-- Run `dotnet test`
-- Investigate test output
-- Fix code or tests
-- Push fix and rerun merge-verify
-
-### Issue: "CI pending"
-- Check GitHub Actions workflow status
-- Wait for completion (up to 30 min default)
-- Rerun merge-verify to check updated status
-
-### Issue: "Merge conflict"
-- Fetch latest main
-- Rebase feature branch on main
-- Resolve conflicts locally
-- Test locally
-- Force-push (if needed)
-- Rerun merge-verify
-
-See `WORKFLOW.md` for more troubleshooting scenarios.
-
-## Project Context
-
-### PureSharp v1.0.0 Roadmap
-
-```text
-#6  Roadmap
-#7  Diagnostic SSOT
-#8  Regression Tests
-#9  RT Semantics
-#10 Interprocedural
-#11 LVP Edge Cases
-#12 FluentIf Hardening
-#13 NuGet Consumer Verification
-#14 Compatibility & Performance
-#15 Documentation
-#16 v0.9 RC
-#17 v1.0.0 Release
-#18 Batch & Merge Skills (this issue)
-```
-
-The Batch & Merge Skills enable efficient, safe execution of this roadmap.
-
-### v1.0.0 Goals
-
-- Establish diagnostic SSOT (#7)
-- Strengthen analyzer rules (#8-#12)
-- Package & verify NuGet consumer (#13)
-- Ensure compatibility & performance (#14)
-- Complete documentation (#15)
-- Release v1.0.0 (#16-#17)
-
-## See Also
-
-- **WORKFLOW.md**: Comprehensive workflow guide with examples
-- **EXAMPLE-REPORT.md**: Sample report showing report format
-- **batch-skill/SKILL.md**: Batch Skill specification
-- **merge-skill/SKILL.md**: Merge Skill specification
-- Issue #18: [Engineering] Introduce Batch and Merge Skills
-- Issue #6: [Roadmap] PureSharp v1.0.0 roadmap
-- `.kiro/steering/`: Project guidance documents
-
-## Contributing
-
-When implementing new features:
-
-1. Create issue in roadmap
-2. Define spec (`.kiro/specs/<issue>`)
-3. Implement using Kiro spec workflow
-4. Use Batch & Merge Skills for coordination
-5. Provide both Human and AI reports
-
-## Support
-
-For questions or issues with Batch & Merge Skills:
-
-1. Review this README
-2. Check WORKFLOW.md for examples
-3. See EXAMPLE-REPORT.md for report format
-4. Consult skill specifications
-5. Check .kiro config files
-
----
-
-**Last Updated**: 2026-08-26  
-**Version**: 1.0  
-**Status**: Ready for v1.0 roadmap execution
+- `WORKFLOW.md` — end-to-end workflow
+- `EXAMPLE-REPORT.md` — reporting example
+- `batch-skill/SKILL.md`, `merge-skill/SKILL.md` — the specifications themselves
+- Issue #18 — Batch and Merge Skills
+- Issue #6 — PureSharp v1.0.0 roadmap
+- `.kiro/steering/` — project guidance documents

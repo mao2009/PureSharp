@@ -1,27 +1,218 @@
+---
+name: merge-skill
+description: Safe integration of a PureSharp pull request into the base branch. Defines the evidence that must be CONFIRMED before a PR becomes a merge candidate, the human approval boundary, and the post-merge verification contract. Use when verifying, approving, or executing a merge.
+---
+
 # Merge Skill for PureSharp Safe Integration
 
-## Overview
+## Status of this document
 
-The Merge Skill safely integrates changes into the main branch through comprehensive Git state verification, CI/test validation, and multi-gate merge protection. It:
+**This document is the executable specification and the single source of truth (SSOT)
+for merge safety in this repository.** There is no helper script. Behaviour is defined
+here, not in any `.ps1`, `.sh`, `.py`, or `.js` file, and none may be introduced as a
+requirement of this skill.
 
-1. Verifies branch and commit state
-2. Validates working tree cleanliness
-3. Confirms build and test success
-4. Checks CI pipeline completion
-5. Validates PR status and approvals
-6. Enforces merge gates
-7. Executes merge with post-verification
+The skill defines **which facts must be established**, not **which commands to run**.
+Any trusted tool available in the execution environment may be used to establish them.
 
-## Canonical Merge Boundary
+## Design Principles
 
-Every document, script, and workflow in this repository follows exactly this sequence:
+1. **SKILL.md is the SSOT.** If this document and any other artifact disagree, this
+   document wins.
+2. **No required environment-dependent script.** No PowerShell, shell, Python, or Node
+   helper is required, and none may be added to satisfy this skill. Migrating the logic
+   from one scripting language to another is not a valid response to this rule.
+3. **Facts, not commands.** Each gate names the fact to establish and the acceptance
+   criterion, never a fixed command line.
+4. **Any trusted source is acceptable.** See "Selecting a trusted source".
+5. **Unavailable evidence is UNVERIFIED, and UNVERIFIED blocks.** Never skip a check
+   because a tool is missing.
+6. **Never infer a gate open.** Gates require CONFIRMED evidence.
+7. **Human approval is required before every merge.** Technical success is not
+   permission.
+
+## Fixed Safety Policy (not configurable)
+
+These hold in every environment and cannot be relaxed by configuration. If a
+configuration file appears to weaken any of them, the configuration is wrong and the
+merge is BLOCKED.
+
+- Fail closed: any error, ambiguity, or missing evidence blocks the merge.
+- Explicit human approval is required before merge execution.
+- Auto-merge is never enabled by this skill.
+- Verification is bound to an exact commit SHA; stale evidence never satisfies a gate.
+- UNVERIFIED blocks. INFERRED does not satisfy a gate.
+- This skill never force-pushes and never pushes directly to the base branch.
+- Working tree must be clean at the point of any local verification.
+
+## Evidence Classification
+
+Shared with the Batch Skill. Use these three labels and no others.
+
+| Label | Meaning |
+|---|---|
+| **CONFIRMED** | Actually observed from a trusted source during this verification run. |
+| **INFERRED** | A reasonable conclusion drawn from CONFIRMED facts, but not itself observed. |
+| **UNVERIFIED** | Not established — including "the tool was unavailable" and "the answer was ambiguous". |
+
+Rules:
+
+- Every gate item in this document requires **CONFIRMED**.
+- **INFERRED** may be reported for context and may support a decision that fails safe
+  (for example, choosing serial execution), but never opens a gate.
+- **UNVERIFIED** blocks. Report it as UNVERIFIED; do not silently omit it.
+- Evidence is bound to the SHA it was observed for. Re-using evidence gathered for a
+  different SHA makes it UNVERIFIED, not CONFIRMED.
+
+## Selecting a Trusted Source
+
+Establish each fact from whichever trusted source the environment actually offers.
+No single mechanism is mandatory. In rough order of preference:
+
+1. A first-party GitHub connector or integration, where the host designates it as such.
+2. The GitHub CLI (`gh`), including its GraphQL access.
+3. The GitHub REST/GraphQL API through an authenticated client.
+4. `git` itself, for purely local facts (branch, commit, ancestry, working tree).
+5. Repository-native build and test tooling, for build and test facts.
+
+Rules:
+
+- Prefer the source that reports the fact **directly**. Do not derive a PR's HEAD from a
+  local branch when the PR itself can be asked.
+- Local `git` alone cannot establish PR state, CI results, reviews, or mergeability.
+- If **no** available source can establish a required fact: record it **UNVERIFIED** and
+  report **MERGE BLOCKED**. "The tool was not available, so the check was skipped" is
+  never acceptable.
+
+## Required Evidence
+
+Each item below must be CONFIRMED, bound to the verification SHA, before the PR can be
+reported a merge candidate.
+
+### A. PR identity
+
+- PR number
+- PR state (must be OPEN)
+- Base branch
+- **PR HEAD SHA** — this is the *verification SHA*; every other item is bound to it
+
+### B. Git state
+
+- Current working branch
+- The HEAD under verification, and that it equals the PR HEAD SHA
+- Working tree state (clean: no uncommitted changes, no untracked files, no merge or
+  rebase in progress)
+- Relationship to the base branch (ancestry known; whether the base has moved since the
+  PR branch diverged)
+
+### C. Build and test
+
+- Required build completed and succeeded, for the verification SHA
+- Required test run completed with zero failures, for the verification SHA
+- Any repository-specific validation required for the changed area
+
+Build and test evidence may come from CI (item D) rather than a local run, provided it
+is bound to the verification SHA. A local run at a different SHA does not satisfy this.
+
+### D. CI
+
+- The CI result that belongs to the **exact** verification SHA
+- **CI HEAD SHA == PR HEAD SHA** — CONFIRMED, not assumed
+- All required checks completed (none pending, queued, or in progress)
+- All required checks concluded successfully
+
+A CI result for any other commit is stale. Stale CI is UNVERIFIED and blocks.
+
+### E. Reviews
+
+- Effective human approvals, computed per "Approval Semantics" below
+- The required approval count in force
+- No blocking review state outstanding
+
+### F. Mergeability
+
+- No merge conflicts with the base branch
+- Repository merge state reported by the host
+- Any required repository policy checks (branch protection, required checks) satisfied
+
+### G. Human approval
+
+- Explicit human approval to execute the merge of this specific PR at this specific SHA
+
+## Approval Semantics
+
+This is a contract, not an implementation. Any source that can answer these questions is
+acceptable, provided it can report, per review: the reviewer identity, whether the
+reviewer is a human or a bot, the review state, the review's submission time, and the
+commit the review was submitted against.
+
+**A review counts as an effective human approval only when all hold:**
+
+- The reviewer is a **human**, not a bot.
+- The review state is **APPROVED**.
+- It is that reviewer's **latest effective review**.
+- The review was submitted against a commit equal to the **current PR HEAD**.
+
+**Determining a reviewer's latest effective state:**
+
+- Only `APPROVED`, `CHANGES_REQUESTED`, and `DISMISSED` change a reviewer's state.
+- `COMMENTED` and `PENDING` reviews never change it.
+- Each reviewer contributes **at most one** state: their most recent state-changing review.
+
+**Never counted as an approval:**
+
+| Case | Result |
+|---|---|
+| Bot review (any state) | not an approval |
+| `COMMENTED` / `PENDING` | not an approval |
+| Review that was dismissed | not an approval |
+| Reviewer approved, then later requested changes | not an approval — and blocking |
+| Approval submitted against an older commit (stale HEAD) | not an approval |
+| Reviewer identity, timestamp, or reviewed commit cannot be determined | UNVERIFIED → BLOCKED |
+
+**Bot identification.** Treat a reviewer as a bot when the host reports the account as a
+bot type, when the login carries a bot marker such as a `[bot]` suffix, or when the login
+is a known automation account for this repository (for example the code-review bot).
+Automated review tooling never contributes a human approval, regardless of verdict.
+
+**Outcomes:**
+
+- Effective human approvals ≥ required count, and no blocking review → gate CONFIRMED.
+- Effective human approvals < required count → **MERGE BLOCKED**.
+- Any reviewer's latest effective state is `CHANGES_REQUESTED` → **MERGE BLOCKED**.
+- Review data cannot be obtained or is incomplete → **UNVERIFIED → MERGE BLOCKED**.
+
+Approval is never inferred from a passing build, from elapsed time, from a comment that
+reads as positive, or from the absence of objection.
+
+## HEAD Binding
+
+Every gate is bound to one SHA — the PR HEAD observed at the start of verification.
+
+- Record the verification SHA explicitly, and report it in every result.
+- CI evidence, review evidence, and build/test evidence must each belong to that SHA.
+- If the PR HEAD changes at any point during verification, the run is invalid.
+  Report **BLOCKED — PR HEAD changed during verification** and start over.
+- A new push to the PR invalidates all prior evidence, including prior approvals.
+
+## Merge Workflow
 
 ```text
-VERIFY
+VERIFY PR IDENTITY
     ↓
-ALL REQUIRED GATES PASS
+VERIFY CURRENT HEAD
     ↓
-MERGE CANDIDATE
+VERIFY GIT STATE
+    ↓
+VERIFY BUILD / TEST
+    ↓
+VERIFY CI FOR EXACT HEAD
+    ↓
+VERIFY EFFECTIVE HUMAN REVIEWS
+    ↓
+VERIFY MERGEABILITY
+    ↓
+PRODUCE MERGE CANDIDATE REPORT
     ↓
 HUMAN REVIEW
     ↓
@@ -29,596 +220,115 @@ EXPLICIT HUMAN APPROVAL
     ↓
 MERGE EXECUTION
     ↓
-POST-MERGE VERIFY
+POST-MERGE VERIFICATION
 ```
 
-Passing every technical gate produces a **MERGE CANDIDATE**, never a merge.
-The transition from MERGE CANDIDATE to MERGE EXECUTION is gated solely by an
-explicit human approval decision. No script in this skill performs a merge.
-
-## Core Responsibilities
-
-### Git State Verification
-
-**Branch Verification**
-- Current branch name
-- Branch tracking status (local vs remote)
-- Branch creation date and last commit
-- Branch permissions and access
-
-**Commit Verification**
-- Base commit (target branch HEAD)
-- Result commit (feature branch HEAD)
-- Commit ancestry (fast-forward eligible)
-- Commit authorship and dates
-- Signed commits (if required)
-
-**Working Tree Verification**
-- No uncommitted changes
-- No untracked files (except .gitignore)
-- No merge conflicts
-- No rebase in progress
-- All stashed changes accounted for
-
-### Build & Test Verification
-
-**Build Verification**
-```
-dotnet build --configuration Release
-```
-- Full clean build succeeds
-- No warnings treated as errors
-- Package creation succeeds
-- All artifacts generated
-
-**Test Verification**
-- Unit tests pass (PureSharp.Analyzers.Tests)
-- Analyzer tests (all diagnostic codes)
-- FluentIf tests
-- LVP tests
-- RT tests
-- Integration tests
-
-**Test Coverage**
-- Changes covered by regression tests
-- No test removal without justification
-- Test output captured for reporting
-
-### CI/CD Pipeline Verification
-
-**GitHub Actions Verification**
-- CI workflow triggered
-- Workflow completed (not pending)
-- Workflow status: SUCCESS or FAILURE
-- All jobs passed
-- Build matrix validated (if multi-platform)
-- Artifact creation confirmed
-- No skipped critical jobs
-
-**CI Timeout Handling**
-- Max wait time: 30 minutes (configurable)
-- Status check interval: 30 seconds
-- Timeout behavior: FAIL (don't merge unverified)
-
-### PR Verification
-
-**PR Metadata**
-- PR number
-- PR state (OPEN, MERGED, CLOSED)
-- PR title and description
-- PR branch and target branch
-- PR creation date
-
-**PR Approval** (see "Approval Semantics" below)
-- Effective approvals, bound to the current PR HEAD
-- Required approvals, read from `.kiro/merge.config.json`
-- Change requests resolved
-
-**PR Conflicts**
-- No merge conflicts
-- Mergeable state confirmed
-
-Note: auto-merge is not a gate and is never relied upon. `.kiro/merge.config.json`
-sets `merge.enableAutoMerge: false`, and this skill never enables it. GitHub reporting
-`mergeable = true` is a statement about conflicts, not an authorization to merge.
-
-### Approval Semantics
-
-`verify-ci-status.ps1` computes **effective human approvals** as follows (fail-closed):
-
-- Only `APPROVED` / `CHANGES_REQUESTED` / `DISMISSED` change a reviewer's state.
-  `COMMENTED` and `PENDING` reviews are ignored.
-- Each reviewer contributes **at most one** state: their latest relevant review.
-  A reviewer who approved and later requested changes does **not** count as an approval.
-- Bot reviews never count (GitHub `__typename = Bot`, a `[bot]` login suffix, or a
-  known bot login such as `coderabbitai`).
-- An `APPROVED` review counts **only** when its reviewed commit OID equals the current
-  PR HEAD. Approvals of earlier commits are stale and do not count.
-- If review authorship, timestamp, or commit OID cannot be determined, the review is
-  reported UNVERIFIED and the gate is **BLOCKED**. Approval is never inferred.
-
-Configuration keys in `.kiro/merge.config.json` → `approval`:
-
-| Key | Phase 1 status |
-|-----|----------------|
-| `requiredApprovals` | **ENFORCED** — read from config; no hardcoded fallback. Must be an integer ≥ 1 or the run is a CONFIG ERROR. |
-| `requirePRApproval` | **ENFORCED** — must be `true`. `false` is NOT SUPPORTED and blocks the run; human approval cannot be disabled. |
-| `requireCodeOwnerApproval` | **NOT YET ENFORCED** (Phase 2) — must be `false`. Setting `true` blocks the run rather than reporting an unchecked gate as passed. |
-| `dismissStaleReviews` | **IGNORED** — this skill is unconditionally stricter: approvals are always bound to the current PR HEAD regardless of this value. |
-
-A configuration that cannot be loaded, parsed, or validated results in
-**CONFIG ERROR → MERGE BLOCKED** with a non-zero exit code. There is no fallback default.
-
-### Merge Gate Enforcement
-
-Gates are split into two distinct layers. Passing layer 1 does **not** authorize a merge.
-
-#### Layer 1 — Technical Gates (automated)
-
-**TECHNICAL GATES PASSED** requires ALL of:
-
-Each gate below names the script that actually enforces it. A gate marked
-**NOT SCRIPTED** must be established by the operator before the gate set is considered
-satisfied — no script checks it, so it can never be reported as automatically CONFIRMED.
-
-| Gate | Enforced by |
-|------|-------------|
-| Branch verified (current, tracked correctly) | `verify-git-state.ps1` |
-| Base commit confirmed (`git rev-parse origin/main`) | `verify-git-state.ps1` |
-| Result commit confirmed (`git rev-parse HEAD`) | `verify-git-state.ps1` |
-| Working tree clean (`git status --porcelain` empty) | `verify-git-state.ps1` |
-| Build succeeded (`dotnet build` exit 0) | `verify-build-and-tests.ps1` |
-| Relevant tests passed (test runner exit 0) | `verify-build-and-tests.ps1` |
-| CI completed successfully at the current PR HEAD (CI `headSha` == PR `headRefOid`) | `verify-ci-status.ps1` |
-| PR exists and mergeable (`gh pr view --json mergeStateStatus`) | `verify-ci-status.ps1` |
-| Effective approvals >= `requiredApprovals` (config-driven, HEAD-bound, bots excluded) | `verify-ci-status.ps1` |
-| No file conflicts with concurrent changes (CONFIRMED only) | **NOT SCRIPTED** — manual, CONFIRMED evidence required |
-| Target branch HEAD unchanged since PR creation | **NOT SCRIPTED** (Phase 2) — manual re-check required |
-
-Running the three scripts covers only the scripted rows. The two NOT SCRIPTED rows are
-the operator's responsibility; treating them as passed without CONFIRMED evidence
-defeats the gate.
-
-Result of layer 1 passing: the PR becomes a **MERGE CANDIDATE**. Nothing is merged.
-
-#### Layer 2 — Human Approval Gate (manual, non-automatable)
-
-```
-✓ A human reviewed the verification report
-✓ A human gave EXPLICIT approval to merge this specific HEAD
-```
-
-**MERGE GATE PASSED** = Layer 1 PASSED **and** Layer 2 PASSED.
-
-**MERGE GATE BLOCKED** if ANY of:
-- Unverified state (UNCONFIRMED)
-- Failed check (test failure, build error)
-- Pending CI (workflow in progress)
-- CI evidence not bound to the current PR HEAD (stale CI)
-- Insufficient effective approvals, or an active CHANGES_REQUESTED
-- Merge conflicts
-- Base branch changed requiring rebase
-- Branch protection rule violation
-- **No explicit human approval recorded** (layer 2 not satisfied)
-
-### Merge Execution
-
-Preconditions, in order. Every one must hold before any command below is run:
-
-1. **Human approval confirmed** — a human has reviewed the verification report and
-   explicitly approved merging this specific HEAD. This is the first and
-   non-negotiable precondition.
-2. Layer 1 technical gates all PASSED for that same HEAD.
-3. PR HEAD unchanged since the approval was given.
-
-Then:
-
-1. Fetch latest from remote
-2. Verify base commit unchanged
-3. Merge with strategy:
-   - `--ff-only` (fast-forward only, or fail)
-   - `--squash` (if configured)
-   - `--no-ff` (if branch protection requires)
-4. Verify merge success
-5. Push to remote
-6. Verify remote state
-
-### Post-Merge Verification
-
-After merge:
-1. Verify main branch updated
-2. Verify PR marked merged
-3. Verify branch cleanup policy
-4. Run smoke tests on main
-5. Verify CI triggered on main
-
-## Usage
-
-### Claude Code Skill Invocation
-
-The Merge Skill is invoked as a Claude Code skill for safe merge integration.
-
-**Verify merge gates** (VERIFICATION ONLY - no changes made):
-```
-/merge-skill verify --pr 123 --details
-```
-
-Performs all merge gate verifications:
-- Git state verification
-- Build verification
-- Test verification
-- CI status verification
-- PR verification
-
-Outputs: Human-readable report with CONFIRMED/INFERRED/UNVERIFIED evidence.
-
-**Gate Status**: Reports whether merge is SAFE or BLOCKED.
-
-### Authority & Safety
-
-**Default Mode**: Verification only
-- No merge executed
-- No branches modified
-- No pushes made
-- Safe for any user to run
-
-**Merge Execution**: Requires explicit human approval
-- User must review verification report
-- User must make merge decision
-- Merge is executed by user with proper permissions
-- Post-merge verification runs automatically
-
-### Typical Workflow
-
-1. **VERIFY** (automated):
-   ```
-   /merge-skill verify --pr 123
-   ```
-   → Review report, check CONFIRMED items
-
-2. **ALL REQUIRED GATES PASS** (automated, layer 1)
-   → If any technical gate fails: MERGE BLOCKED. Fix and return to step 1.
-
-3. **MERGE CANDIDATE**
-   → The PR is a candidate only. Nothing has been merged.
-
-4. **HUMAN REVIEW** (manual):
-   - Examine every CONFIRMED item
-   - Confirm there are no INFERRED or UNVERIFIED items in the gate set
-
-5. **EXPLICIT HUMAN APPROVAL** (manual, required):
-   → A human states the decision to merge this specific HEAD.
-   → Without this step, do not proceed. There is no automated substitute.
-
-6. **MERGE EXECUTION** (manual, only after step 5):
-   ```
-   git checkout main
-   git merge --ff-only feature/issue-NNN
-   git push origin main
-   ```
-   → User manually executes merge with full control
-
-7. **POST-MERGE VERIFY** (automated):
-   ```
-   /merge-skill verify --pr 123 --post-merge
-   ```
-   → Verify main branch updated and CI triggered
-
-## Evidence Classification in Merge Context
-
-### CONFIRMED (Must verify before merge)
-
-- `git status` output (no uncommitted changes)
-- `git rev-parse HEAD` (exact commit hash)
-- `git rev-parse origin/main` (base commit hash)
-- `dotnet build` exit code (0 = success)
-- `dotnet test` exit code
-- `gh run view --json status` (completed status)
-- `gh pr view --json mergeStateStatus` (MERGEABLE or BLOCKED)
-- `git log --oneline` (commit history visible)
-
-Examples of what to CONFIRM:
-```
-CONFIRMED: git status returned "On branch feature/issue-18"
-CONFIRMED: Build succeeded with exit code 0
-CONFIRMED: CI workflow completed with status "success"
-CONFIRMED: PR #123 mergeable state is "MERGEABLE"
-CONFIRMED: 24 tests passed, 0 failed
-```
-
-### INFERRED (Must still verify)
-
-- "Build passed so no syntax errors" (reasonable, but verify with test)
-- "No conflicts likely since last rebase was clean" (still check)
-- "Parallel changes won't conflict" (still check CI)
-
-**Never INFER merge status from these**:
-- Time since last check (CI may have failed after)
-- Developer confidence (need actual verification)
-- Past success history (current state matters)
-
-### UNVERIFIED (Do not merge)
-
-- "CI is probably running" → Must see actual status
-- "Tests should pass" → Must run tests
-- "I think merge succeeded" → Must verify branch state
-- "Branch looks clean" → Must run git status
-
-**Merge gate blocks on ANY UNVERIFIED item**.
-
-## Git State Report Format
-
-```
-# Git State
-
-## Branch Information
-- Current Branch: feature/issue-18
-- Tracking: origin/feature/issue-18
-- Branch Created: 2026-08-26T12:00:00Z
-- Last Commit: abc1234 (2 hours ago)
-
-## Commits
-- Base Commit: main = def5678
-- Result Commit: HEAD = abc1234
-- Ancestry: abc1234 is 5 commits ahead of main
-
-## Working Tree
-- Status: clean
-- Uncommitted: 0
-- Untracked: 0
-- Conflicts: 0
-
-## Remote
-- Reachable: yes
-- Last Fetch: 5 minutes ago
-```
-
-## Build & Test Report
-
-```
-# Build & Test Verification
-
-## Build Status
-- Configuration: Release
-- Status: SUCCESS
-- Duration: 2m 15s
-- Output: [logs]
-
-## Unit Tests
-- PureSharp.Analyzers.Tests: 87 passed, 0 failed
-- Duration: 1m 32s
-
-## Analyzer Tests
-- RT (Referential Transparency): 24 passed
-- LVP (Local Variable Purity): 18 passed
-- FIF (FluentIf): 12 passed
-
-## Coverage
-- Modified Files: 3
-- Affected Code: 85% coverage
-```
-
-## CI Report
-
-```
-# CI/CD Pipeline Status
-
-## Workflow: CI & NuGet Upload
-- Run ID: 123456789
-- Status: SUCCESS
-- Triggered: By push to feature/issue-18
-- Duration: 4m 30s
-- Completed: 2026-08-26T14:30:00Z
-
-## Jobs
-- build-test: SUCCESS (build, test, pack steps)
-
-## Artifacts
-- NuGet Package: PureSharp.Core.0.1.7.nupkg (verified)
-
-## Checks Passed
-- ✓ Build (ubuntu-latest)
-- ✓ Tests (87 passed)
-- ✓ Package creation
-```
-
-## PR Report
-
-```
-# Pull Request Status
-
-## PR Information
-- Number: #123
-- Title: [Issue #18] Implement batch and merge skills
-- State: OPEN
-- Branch: feature/issue-18 → main
-
-## Merge Status
-- Mergeable: YES
-- Merge State Status: MERGEABLE
-- Conflicts: 0
-- Draft: NO
-
-## Approvals
-- Required Approvals: 1 (source: .kiro/merge.config.json)
-- Effective Approvals: 1 (human, bound to HEAD abc1234)
-- Stale Approvals Ignored: 0
-- Bot Reviews Excluded: 1 (coderabbitai)
-- Change Requests: 0
-- Dismissed Reviews: 0
-
-## Commits
-- Commit Count: 5
-- Latest Commit: abc1234
-```
-
-## Merge Gate Checklist
-
-```
-# Merge Gate Verification
-
-## Git State
-- [CONFIRMED] Branch: feature/issue-18
-- [CONFIRMED] Base Commit: def5678 (main)
-- [CONFIRMED] Result Commit: abc1234
-- [CONFIRMED] Working Tree: clean
-- [CONFIRMED] Upstream: synchronized
-
-## Build
-- [CONFIRMED] Build: SUCCESS
-- [CONFIRMED] No warnings as errors
-- [CONFIRMED] Artifacts: created
-
-## Tests
-- [CONFIRMED] Unit Tests: 87/87 passed
-- [CONFIRMED] Analyzer Tests: 54/54 passed
-- [CONFIRMED] Integration Tests: 12/12 passed
-
-## CI
-- [CONFIRMED] GitHub Actions: completed
-- [CONFIRMED] Status: SUCCESS
-- [CONFIRMED] All jobs passed
-
-## PR
-- [CONFIRMED] PR #123: exists
-- [CONFIRMED] Mergeable: YES
-- [CONFIRMED] Effective approvals: 1/1 (HEAD-bound, bots excluded)
-
-## Result (Layer 1)
-### TECHNICAL GATES PASSED ✓ → MERGE CANDIDATE
-
-All automated verification gates confirmed for HEAD abc1234.
-NOT merged. NOT authorized to merge.
-
-## Result (Layer 2)
-### AWAITING EXPLICIT HUMAN APPROVAL
-
-Next: HUMAN REVIEW → EXPLICIT HUMAN APPROVAL → MERGE EXECUTION → POST-MERGE VERIFY
-```
+**Technical verification success is not permission to merge.** Passing every gate
+through "VERIFY MERGEABILITY" produces a **MERGE CANDIDATE** and nothing more. The
+transition to MERGE EXECUTION is authorised only by an explicit human decision.
+
+The skill's default mode is verification only: it reads state, changes nothing, pushes
+nothing, and is safe to run at any time.
+
+## Merge Execution
+
+No shell-specific command is prescribed. Choose the mechanism from the trusted sources
+available, honouring the repository's merge policy and the configured merge method.
+
+**Prefer a mechanism that lets you state the expected HEAD**, so the host itself refuses
+the merge if the PR moved. Where the host supports it, pass the expected SHA rather than
+merging whatever is current.
+
+**Immediately before executing the merge, re-confirm all of:**
+
+- [ ] Explicit human approval exists for this PR at this SHA
+- [ ] PR HEAD unchanged since verification
+- [ ] CI still valid and successful for the current HEAD
+- [ ] Effective human approvals still satisfy the required count
+- [ ] No blocking review state has appeared
+- [ ] Mergeability unchanged; no conflicts
+- [ ] Base branch has not moved in a way that invalidates the verification
+
+If any of these cannot be re-confirmed: **BLOCKED**. Do not merge. Return to VERIFY.
+
+Never bypass branch protection, never force-push, never push directly to the base
+branch, and never enable auto-merge to satisfy a gate.
+
+## Post-Merge Verification
+
+Required evidence, each CONFIRMED:
+
+- PR state is `MERGED`
+- The actual merge commit is identified
+- The base branch contains the expected result
+- Base branch HEAD and state verified after the merge
+- Post-merge CI result, where the repository requires one
+- Linked issue state updated as expected
+- Branch cleanup eligibility determined
+
+Anything not established here is **UNVERIFIED**. Report it as such — a completed merge
+does not retroactively confirm what was never checked.
+
+## Failure Behaviour
+
+| Situation | Result |
+|---|---|
+| Any required evidence UNVERIFIED | **MERGE BLOCKED** |
+| Any gate item only INFERRED | **MERGE BLOCKED** |
+| CI failed, pending, queued, or in progress | **MERGE BLOCKED** |
+| CI belongs to a different SHA than PR HEAD | **MERGE BLOCKED** (stale) |
+| Effective human approvals below required count | **MERGE BLOCKED** |
+| Any `CHANGES_REQUESTED` outstanding | **MERGE BLOCKED** |
+| Merge conflict, or mergeability unknown | **MERGE BLOCKED** |
+| Working tree dirty at local verification | **MERGE BLOCKED** |
+| PR HEAD changed mid-verification | **BLOCKED**, restart verification |
+| Configuration missing, malformed, or invalid | **CONFIG ERROR → MERGE BLOCKED** |
+| Configuration attempts to weaken fixed safety policy | **CONFIG ERROR → MERGE BLOCKED** |
+| No explicit human approval | **MERGE BLOCKED** |
+| No trusted source can establish a required fact | **UNVERIFIED → MERGE BLOCKED** |
+
+There is no configuration, flag, or argument that converts any of these into a pass.
 
 ## Configuration
 
-`.kiro/merge.config.json` is the single source of truth for the approval gate.
-The scripts read it directly; nothing is hardcoded. Relevant excerpt:
+`.kiro/merge.config.json` carries **data only**. All behaviour is defined in this
+document. Configuration can make the gate *stricter*, never weaker.
 
-```json
-{
-  "merge": {
-    "baseBranch": "main",
-    "requireFastForward": false,
-    "requireSignedCommits": false,
-    "enableAutoMerge": false
-  },
-  "approval": {
-    "requirePRApproval": true,
-    "requiredApprovals": 1,
-    "requireCodeOwnerApproval": false,
-    "dismissStaleReviews": false
-  }
-}
-```
+Schema:
 
-Changing `approval.requiredApprovals` to `2` makes the script require two effective
-human approvals. See "Approval Semantics" above for which keys are ENFORCED,
-NOT YET ENFORCED, or IGNORED in Phase 1.
+| Key | Type | Meaning |
+|---|---|---|
+| `requiredApprovals` | integer ≥ 1 | Effective human approvals required. Must be at least 1; there is no way to require zero. |
+| `mergeMethod` | `"merge"` \| `"squash"` \| `"rebase"` \| `"ff-only"` | Merge method to use during MERGE EXECUTION. |
+| `deleteBranchAfterMerge` | boolean | Whether the PR branch is eligible for deletion after a confirmed merge. |
 
-## Verification Checklist
+Rules:
 
-Layer 1 — technical gates (automated):
+- Missing file, malformed JSON, an unknown key, a key of the wrong type, or
+  `requiredApprovals < 1` → **CONFIG ERROR → MERGE BLOCKED**. There is no default
+  fallback for `requiredApprovals`.
+- Anything not in the table above is not configurable. Human approval, fail-closed
+  behaviour, HEAD binding, and auto-merge being disabled are fixed policy and are
+  deliberately absent from the schema so they cannot be switched off.
 
-- [ ] Git branch verified
-- [ ] Base commit confirmed
-- [ ] Result commit confirmed
-- [ ] Working tree clean confirmed
-- [ ] Build success confirmed
-- [ ] Unit tests pass confirmed
-- [ ] Analyzer tests pass confirmed
-- [ ] Integration tests pass confirmed
-- [ ] CI workflow completed at the current PR HEAD confirmed
-- [ ] PR state verified
-- [ ] PR mergeable confirmed
-- [ ] Effective approvals >= requiredApprovals confirmed
-- [ ] No file conflicts confirmed
-- [ ] All technical gates passed confirmed → MERGE CANDIDATE
+## Report Format
 
-Layer 2 — human approval gate (manual):
+Report the verification SHA, then each evidence group with its classification, then the
+verdict. See `../EXAMPLE-REPORT.md` for a worked example.
 
-- [ ] Human review of the verification report completed
-- [ ] Explicit human approval recorded for this HEAD
+The verdict is exactly one of:
 
-Post-merge (automated, only after layers 1 and 2):
+- **MERGE CANDIDATE** — every gate CONFIRMED; awaiting human review and explicit approval
+- **MERGE BLOCKED** — at least one gate failed, INFERRED, or UNVERIFIED
+- **MERGED** — merge executed after explicit approval, with post-merge verification result
 
-- [ ] Merge executed successfully
-- [ ] Remote state synchronized
-- [ ] Post-merge verification passed
+Never report "safe to merge" or "ready to merge" as a substitute for MERGE CANDIDATE;
+those phrasings read as authorisation, which this skill cannot grant.
 
-## Failure Scenarios & Recovery
+## Related
 
-### Scenario: Build Failed
-
-```
-MERGE GATE BLOCKED: Build failed
-
-Diagnosis:
-- dotnet build exit code: 1
-- Error: CS0103 - Name 'MyVar' does not exist
-
-Recovery:
-1. Fix code on feature branch
-2. Push fixes
-3. Wait for CI retry
-4. Re-run merge-verify
-
-Do not merge until build succeeds.
-```
-
-### Scenario: CI Timeout
-
-```
-MERGE GATE BLOCKED: CI not completed
-
-Diagnosis:
-- GitHub Actions workflow running for 45 minutes
-- Status: in_progress
-- Timeout configured: 30 minutes
-
-Recovery:
-1. Check workflow logs for blockage
-2. If stuck: restart workflow manually
-3. If failed: fix issue and push
-4. Re-run merge-verify
-
-Do not merge with pending CI.
-```
-
-### Scenario: Merge Conflict
-
-```
-MERGE GATE BLOCKED: Merge conflict detected
-
-Diagnosis:
-- Main branch changed since PR created
-- Auto-merge returned conflicted state
-
-Recovery:
-1. Fetch latest main
-2. Rebase feature/issue-18 onto main
-3. Resolve conflicts locally
-4. Push rebased branch (force-push if needed)
-5. Wait for CI retry
-6. Re-run merge-verify
-
-Do not merge with conflicts.
-```
-
-## Related Skills
-
-- **Batch Skill**: Orchestrate multiple issues with proper merge gates
-- **Code Review**: Automated review gates before merge
-- **Kiro Spec Skills**: Individual issue specification
-
-## See Also
-
-- Issue #18: [Engineering] Introduce Batch and Merge Skills
-- Issue #6: [Roadmap] PureSharp v1.0.0 roadmap
-- `.kiro/steering/`: Project guidance documents
+- `../batch-skill/SKILL.md` — batch orchestration and parallel safety
+- `../WORKFLOW.md` — end-to-end workflow from issue to merged PR
+- `../EXAMPLE-REPORT.md` — reporting example
+- Issue #18 — Batch and Merge Skills
+- Issue #6 — PureSharp v1.0.0 roadmap

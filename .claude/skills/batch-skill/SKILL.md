@@ -1,340 +1,193 @@
+---
+name: batch-skill
+description: Orchestrates multiple PureSharp GitHub issues as a batch. Defines dependency analysis, the CONFIRMED-only evidence bar for parallel execution, execution graph construction, result aggregation, and batch reporting. Use when planning or running work across several issues.
+---
+
 # Batch Skill for PureSharp Issue Orchestration
 
-## Overview
+## Status of this document
 
-The Batch Skill orchestrates safe, parallel execution of multiple GitHub Issues for PureSharp development. It:
+**This document is the executable specification and the single source of truth (SSOT)
+for batch orchestration in this repository.** There is no helper script. Behaviour is
+defined here, not in any `.ps1`, `.sh`, `.py`, or `.js` file, and none may be introduced
+as a requirement of this skill.
 
-1. Selects executable issues from the roadmap
-2. Analyzes issue dependencies
-3. Classifies issues for parallel execution
-4. Determines safe execution order
-5. Collects results across multiple issue implementations
-6. Generates structured reports with evidence classification
+The skill defines **which facts must be established**, not **which commands to run**.
 
-## Core Responsibilities
+## Design Principles
 
-### Issue Selection & Dependency Analysis
+1. **SKILL.md is the SSOT.**
+2. **No required environment-dependent script.** Porting logic from one scripting
+   language to another is not a valid response to this rule.
+3. **Facts, not commands.**
+4. **Any trusted source is acceptable** — see the Merge Skill's "Selecting a trusted
+   source", which applies identically here.
+5. **Unavailable evidence is UNVERIFIED.** Never skip a check because a tool is missing.
+6. **Parallel execution requires proof of safety, not absence of evidence of danger.**
+7. **Serial execution is the safe default.** When in doubt, run serially.
 
-- Retrieve open issues from PureSharp roadmap (#6-#18)
-- Parse issue relationships (parent, blocking, blocked-by, sub-issues)
-- Identify issue categories:
-  - **Independent**: No blocking dependencies
-  - **Dependent**: Blocked by other issues
-  - **Blocking**: Blocks other issues
-- Extract acceptance criteria and verification needs from issue body
+## Fixed Safety Policy (not configurable)
 
-### Parallel Execution Classification
-
-**Issues CANNOT run in parallel if ANY of the following holds:**
-- They modify the same file/directory
-- They modify the same architectural component
-- A dependency chain exists between them
-- API change + consumer change
-- Release/version issues
-- Shared configuration is touched by more than one issue
-- A shared API contract is touched by more than one issue
-- Execution order between them matters
-- **Dependency status is INFERRED**
-- **Dependency status is UNVERIFIED**
-- **Architectural coupling is unconfirmed**
-- Conflict status is INFERRED or UNVERIFIED
-
-**Issues CAN run in parallel ONLY if ALL of the following are CONFIRMED:**
-
-- [ ] No file overlap (file-by-file diff/plan comparison, not naming heuristics)
-- [ ] No shared configuration touched by more than one issue
-- [ ] No shared API contract touched by more than one issue
-- [ ] No architectural dependency between the issues
-- [ ] Dependency graph fully resolved (every edge determined, none assumed)
-- [ ] No execution order dependency
-
-Every box must be CONFIRMED for the same pair of issues.
-A single INFERRED or UNVERIFIED box disqualifies parallel execution for that pair.
-
-**CRITICAL: Parallel Safety Must Be CONFIRMED**
-
-File non-overlap alone is NOT sufficient to mark parallel safety as CONFIRMED.
-Two issues touching disjoint files can still conflict through shared configuration,
-a shared API contract, an architectural dependency, or a required execution order.
-
-"Different diagnostic analyzers" and "different files" are starting observations,
-not conclusions. They must be paired with the shared-config, shared-contract,
-architectural-dependency, and execution-order checks above before the pair can be
-classified CONFIRMED.
-
-Evidence Levels:
-
-- **CONFIRMED**: Every checklist item above verified directly (file lists, config
-  references, contract references, dependency graph)
-- **INFERRED**: Design or naming suggests no conflicts, but at least one checklist
-  item was reasoned about rather than verified
-- **UNVERIFIED**: At least one checklist item could not be determined
-
-Execution policy by evidence level:
-
-| Evidence level | Execution |
-|----------------|-----------|
-| CONFIRMED      | PARALLEL permitted |
-| INFERRED       | SERIAL (parallel forbidden) |
-| UNVERIFIED     | SERIAL, or BLOCKED if the unknown affects correctness |
-
-Parallel execution requires CONFIRMED evidence for every checklist item.
-Never promote INFERRED to CONFIRMED because "a conflict seems unlikely".
-
-### Execution Order Determination
-
-1. Build dependency graph (DAG)
-2. Topological sort to find execution layers
-3. Identify parallel batches within each layer
-4. Flag issues requiring human review/approval
-
-### Result Collection & Verification
-
-- Track per-issue:
-  - Git branch and commits
-  - Build status
-  - Test results
-  - PR status
-  - CI results
-- Distinguish:
-  - **Success**: All checks passing
-  - **Blocked**: Dependency failure
-  - **Failed**: Implementation or verification failure
-  - **Pending**: Awaiting human approval
-  - **Unexecuted**: Skipped due to conflict
-
-### Report Generation
-
-Generate structured reports in two layers:
-
-**Human Report** (Executive Summary)
-- What was executed
-- Success/failure breakdown
-- Critical blockers
-- Recommended next steps
-
-**AI Report** (Technical Details)
-- Evidence classification (CONFIRMED/INFERRED/UNVERIFIED)
-- Git state per issue
-- Verification results
-- Dependency resolution status
-
-## Usage
-
-### Typical Workflow
-
-### Claude Code Skill Invocation
-
-The Batch Skill is invoked as a Claude Code skill (not Kiro-specific).
-
-**Analyze dependencies and plan batch execution**:
-```
-/batch-skill analyze --issues 7,8,9,10,11,12
-```
-
-Provides:
-- Dependency graph analysis
-- Parallel execution classification
-- Execution order recommendation
-- Blocking relationship summary
-
-**Integration workflow** (standard Kiro + Batch Skill):
-1. Batch Skill provides planning (analyze command)
-2. Kiro spec system handles implementation (`/kiro-spec-quick`)
-3. Merge Skill handles integration (separate skill)
-
-## Dependency Graph Example (Illustrative)
-
-**Note**: The following example is illustrative. Actual PureSharp v1.0 issues may have different dependency structures. Always verify dependencies via GitHub issue metadata before execution.
-
-```
-Example Sequential Dependencies:
-Issue #7: Diagnostic SSOT
-    ↓ (blocks)
-Issue #8: Regression Tests
-    ↓ (blocks)
-Issue #9: RT Semantics
-    ↓ (blocks)
-Issue #10: Interprocedural Analysis
-
-Example Independent Issues:
-Issue #11: LVP (independent from #7-#10)
-Issue #12: FluentIf (independent from #7-#10)
-
-Example Execution Plan:
-Parallel Batch Layer 1: [#7]
-Parallel Batch Layer 2: [#8, #11]
-Parallel Batch Layer 3: [#9, #12]
-Parallel Batch Layer 4: [#10]
-```
-
-### Actual PureSharp v1.0 Structure
-
-In PureSharp v1.0 roadmap:
-- All issues #7-#18 have parent issue #6 (the roadmap)
-- Actual dependencies may be different from sequential examples above
-- Always analyze actual GitHub issue metadata for real dependency structure
-
-## Issue Metadata Format
-
-Each issue should include:
-
-```markdown
-## Blocking Issues
-- #X, #Y (must complete first)
-
-## Blocked By
-- #A, #B (blocks these from parallel execution)
-
-## Modified Files
-- /src/path/to/component
-- /tests/path/to/tests
-
-## Verification Gates
-- [ ] Build succeeds
-- [ ] Unit tests pass
-- [ ] Integration tests pass
-- [ ] CI passes
-- [ ] PR approval
-- [ ] Documentation complete
-```
-
-## Git State Verification
-
-Before batch execution, verify:
-
-- Current branch (must be clean or on feature branch)
-- Base branch (usually `main`)
-- No uncommitted changes
-- Remote is reachable
-
-During batch execution:
-
-- Per-issue branch management
-- Commit tracking
-- PR creation/status
-- CI result polling
-
-After batch execution:
-
-- Branch cleanup
-- Merge state verification
-- Target branch verification
+- Parallel execution requires CONFIRMED evidence on every safety dimension.
+- INFERRED safety → serial execution.
+- UNVERIFIED safety → serial execution, or BLOCKED where the unknown affects correctness.
+- A batch never merges anything. Merging is the Merge Skill's responsibility and always
+  requires explicit human approval.
+- Fail closed: any error, ambiguity, or missing evidence degrades toward serial or blocked.
 
 ## Evidence Classification
 
-### CONFIRMED
-- Facts verified via Git, CLI, API, or test results
-- Examples:
-  - `git status` returns clean
-  - `dotnet test` returns all tests pass
-  - GitHub API confirms PR merge status
-  - CI workflow completed with status
+Identical to the Merge Skill.
 
-### INFERRED
-- Reasonable conclusion from confirmed evidence
-- Examples:
-  - "Build passed because test suite passed" (dependency inference)
-  - "No file conflicts likely" (from dependency analysis)
-  - "Parallel execution safe" (from architectural analysis)
+| Label | Meaning |
+|---|---|
+| **CONFIRMED** | Actually observed from a trusted source during this run. |
+| **INFERRED** | A reasonable conclusion from CONFIRMED facts, not itself observed. |
+| **UNVERIFIED** | Not established, including "the tool was unavailable". |
 
-### UNVERIFIED
-- Information not yet checked
-- Examples:
-  - "CI in progress"
-  - "PR review status unknown"
-  - "Remote branch state uncertain"
+- Gate items require **CONFIRMED**.
+- **INFERRED** may support a decision that fails safe — choosing serial execution is such
+  a decision. It may never open a gate or authorise parallelism.
+- **UNVERIFIED** must be reported, never omitted.
 
-**NEVER**:
-- Assume success
-- Infer merge status without checking
-- Skip verification steps
-- Claim CONFIRMED for unverified state
+## Batch Workflow
 
-## Merge Gate Requirements
+1. **Retrieve the issues.** Obtain the batch's issues from a trusted GitHub source.
+2. **Confirm current state.** For each issue: open or closed, assignee, labels, linked
+   PRs. Work from live state, never from a cached or remembered list.
+3. **Read the requirements.** Read each issue body and its acceptance criteria.
+4. **Identify dependencies.** Establish blocking / blocked-by relationships from issue
+   metadata and issue content — not from issue-number ordering.
+5. **Investigate affected areas.** For each issue, determine the code, configuration,
+   and public contracts it will touch.
+6. **Classify the evidence.** Label every dependency and affected-area finding
+   CONFIRMED, INFERRED, or UNVERIFIED.
+7. **Decide parallel safety.** Apply the checklist below, pairwise.
+8. **Build the execution graph.** Resolve the dependency DAG into ordered layers, with
+   parallel groups only where safety is CONFIRMED.
+9. **Execute the batch**, honouring the graph.
+10. **Aggregate results** per issue.
+11. **Report**, in the two-layer format.
 
-Batch can only proceed to merge phase when:
+## Parallel Safety
 
-For each issue:
-- [ ] Branch exists and is clean
+Two issues may run in parallel **only when every dimension below is CONFIRMED for that
+specific pair**:
+
+- [ ] Dependency graph resolved — every edge between them determined, none assumed
+- [ ] No execution-order dependency
+- [ ] No shared mutable configuration
+- [ ] No shared public contract change
+- [ ] No architectural coupling that requires ordering
+- [ ] No conflicting change area
+- [ ] No release or version coordination conflict
+
+**File non-overlap alone is never sufficient.** Two issues touching disjoint files can
+still conflict through shared configuration, a shared public contract, architectural
+coupling, or a required execution order. "Different analyzers" and "different files" are
+starting observations, not conclusions.
+
+Decision table:
+
+| Evidence level on any dimension | Execution |
+|---|---|
+| All dimensions CONFIRMED | **PARALLEL permitted** |
+| Any dimension INFERRED | **SERIAL** |
+| Any dimension UNVERIFIED | **SERIAL**, or **BLOCKED** if the unknown affects correctness |
+
+**If safety cannot be proven, do not choose parallel execution.** The absence of a known
+conflict is not evidence of independence. Never promote INFERRED to CONFIRMED because a
+conflict seems unlikely.
+
+Configuration may lower the parallel limit but can never lower this evidence bar.
+
+## Result Collection
+
+Track, per issue:
+
+- Branch and the commits produced
+- Build result
+- Test result
+- PR identity and state
+- CI result, bound to the PR HEAD
+
+Classify each issue's outcome as exactly one of:
+
+| Status | Meaning |
+|---|---|
+| **Success** | All required checks CONFIRMED passing |
+| **Blocked** | A dependency did not complete, or a gate blocked it |
+| **Failed** | Implementation or verification failed |
+| **Pending** | Awaiting human approval or an external result |
+| **Unexecuted** | Skipped — conflict risk, or an unresolved dependency |
+
+## Batch Gate
+
+A batch may advance to the merge phase only when, for **every** issue:
+
+- [ ] Branch exists and its working tree is clean (CONFIRMED)
 - [ ] Base commit identified (CONFIRMED)
 - [ ] Result commit identified (CONFIRMED)
 - [ ] Build succeeded (CONFIRMED)
 - [ ] Relevant tests passed (CONFIRMED)
-- [ ] CI passed (CONFIRMED)
+- [ ] CI passed for the PR HEAD (CONFIRMED)
 - [ ] PR exists and is mergeable (CONFIRMED)
-- [ ] No uncommitted changes (CONFIRMED)
-- [ ] No file conflicts with other batch issues (CONFIRMED)
-- [ ] Explicit human approval recorded for the merge (CONFIRMED)
+- [ ] No file conflicts with other issues in the batch (CONFIRMED)
 
-Analysis-based / inferred evidence does NOT satisfy the conflict gate:
+Conflict evidence bar:
 
 | Conflict evidence | Batch gate |
-|-------------------|------------|
-| CONFIRMED         | may pass |
-| INFERRED          | **BATCH GATE BLOCKED** |
-| UNVERIFIED        | **BATCH GATE BLOCKED** |
+|---|---|
+| CONFIRMED | may pass |
+| INFERRED | **BATCH GATE BLOCKED** |
+| UNVERIFIED | **BATCH GATE BLOCKED** |
 
-If any check is INFERRED, UNVERIFIED, or BLOCKED, report as **BATCH GATE BLOCKED**.
+Passing the batch gate makes each PR a **merge candidate** and nothing more. Every merge
+still runs through the Merge Skill, including its explicit human approval step. The batch
+gate never authorises a merge.
 
-Passing every box above makes the batch a MERGE CANDIDATE only.
-Merge execution still requires explicit human approval - see
-`.claude/skills/merge-skill/SKILL.md`.
+## Reporting
+
+Two layers, both required.
+
+**Human report** — what was executed, success and failure breakdown, critical blockers,
+recommended next steps.
+
+**AI report** — evidence classification per finding, per-issue git state, verification
+results, dependency resolution status, and the parallel-safety decision with the evidence
+that drove it.
+
+Report the parallel-safety decision explicitly, including which dimensions were
+CONFIRMED and which forced serial execution. A batch that ran serially because safety
+could not be proven is a correct outcome and should be reported as such, not as a
+shortfall.
+
+See `../EXAMPLE-REPORT.md`.
 
 ## Configuration
 
-Create `.kiro/batch.config.json`:
+`.kiro/batch.config.json` carries **data only**. All behaviour is defined here.
 
-```json
-{
-  "defaultBatchName": "v1.0-batch",
-  "maxParallelTasks": 2,
-  "ciTimeoutMinutes": 30,
-  "verificationTimeout": 300,
-  "reportFormat": "both",
-  "requireHumanApproval": true,
-  "failureMode": "stop",
-  "gitCheckoutDepth": 1,
-  "pruneLocalBranches": true
-}
-```
+| Key | Type | Meaning |
+|---|---|---|
+| `maxParallelTasks` | integer ≥ 1 | Upper bound on concurrent tasks. `1` forces fully serial execution. |
 
-## Verification Checklist
+Rules:
 
-- [ ] All issues analyzed for dependencies
-- [ ] Parallel batches identified correctly
-- [ ] No undetected file conflicts
-- [ ] Dependency graph validated
-- [ ] Git state verified for all branches
-- [ ] Build succeeds for each issue
-- [ ] Tests passing for each issue
-- [ ] CI status checked for each issue
-- [ ] PR status confirmed for each issue
-- [ ] Final merge gates passed
+- Missing file, malformed JSON, an unknown key, a key of the wrong type, or
+  `maxParallelTasks < 1` → **CONFIG ERROR → BATCH BLOCKED**.
+- `maxParallelTasks` is a **ceiling, not a licence**. It never authorises parallelism the
+  evidence bar has not already permitted. Raising it cannot make an INFERRED or
+  UNVERIFIED pair parallel-eligible.
+- Safety policy is deliberately absent from the schema so it cannot be switched off.
+- The v1.0 roadmap, its phases, and its target dates live in the GitHub issues
+  (Issue #6), not in this configuration. Do not duplicate them here — a second copy
+  silently goes stale.
 
-## Limitations & Future Work
+## Related
 
-Current phase:
-- GitHub issues API only (no other trackers)
-- Manual merge phase (see Merge Skill)
-- No automatic rebase/conflict resolution
-- Requires pre-written specs/PRs
-
-Future phases:
-- Automatic issue -> PR -> merge workflow
-- Conflict detection and resolution
-- Cross-issue test suite coordination
-- Performance/resource monitoring
-- Advanced scheduling (priority, estimated time)
-
-## Related Skills
-
-- **Merge Skill**: Safe PR merging with full verification
-- **Kiro Spec Skills**: Individual issue spec-driven development
-- **Code Review**: Automated code review during batch execution
-
-## See Also
-
-- Issue #18: [Engineering] Introduce Batch and Merge Skills
-- Issue #6: [Roadmap] PureSharp v1.0.0 roadmap
-- `.kiro/steering/`: Project guidance documents
+- `../merge-skill/SKILL.md` — merge gates, approval semantics, human approval boundary
+- `../WORKFLOW.md` — end-to-end workflow
+- `../EXAMPLE-REPORT.md` — reporting example
+- Issue #18 — Batch and Merge Skills
+- Issue #6 — PureSharp v1.0.0 roadmap
