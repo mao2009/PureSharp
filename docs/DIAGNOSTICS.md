@@ -20,6 +20,8 @@ with `[PureMethod]`**.
 
 The purity model these diagnostics approximate — and, importantly, the cases v1.0 does
 **not** detect — is specified in [`PURITY-SEMANTICS.md`](PURITY-SEMANTICS.md).
+How `RT0002` treats calls across method, interface, and assembly boundaries is specified
+in [`CALL-CONTRACT.md`](CALL-CONTRACT.md).
 
 | Field | Value |
 |---|---|

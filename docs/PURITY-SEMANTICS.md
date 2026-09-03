@@ -150,7 +150,7 @@ analysed in v1.0.
 
 An unmarked method is reported (`RT0002`) without inspecting its body, so PureSharp never
 concludes that an unmarked method *is* pure. The reach of the `[PureMethod]` contract
-across call boundaries is specified separately — see Issue #10.
+across call boundaries is specified in [`CALL-CONTRACT.md`](CALL-CONTRACT.md).
 
 ### 7. Local functions
 
