@@ -17,5 +17,9 @@ obj/
 *.tmp
 *.temp
 
+# Ignore Claude Code and build output
+.omc/
+nupkg-output/
+
 # Ignore NuGet package cache (if applicable)
 # .nuget/

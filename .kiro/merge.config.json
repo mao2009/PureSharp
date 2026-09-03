@@ -1,0 +1,6 @@
+{
+  "$description": "PureSharp Merge Skill configuration. DATA ONLY. All merge behaviour and all safety policy are defined in .claude/skills/merge-skill/SKILL.md, which is the SSOT. requiredApprovals is the number of THIRD-PARTY GitHub APPROVED reviews required; it never counts the PR author and is not a switch for out-of-band approval. mergeMethod must be one of merge/squash/rebase (the only methods GitHub can execute for a pull request) and must be enabled in the repository settings. Everything else (explicit human approval, fail-closed gating, HEAD binding, repository-policy precedence, the conditions permitting out-of-band approval, auto-merge disabled) is fixed policy and is deliberately absent so it cannot be switched off. An unknown key, a wrong type, requiredApprovals < 1, or an invalid/unavailable mergeMethod is a CONFIG ERROR and blocks the merge.",
+  "requiredApprovals": 1,
+  "mergeMethod": "merge",
+  "deleteBranchAfterMerge": true
+}

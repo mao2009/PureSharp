@@ -1,0 +1,4 @@
+{
+  "$description": "PureSharp Batch Skill configuration. DATA ONLY. All batch behaviour and all safety policy are defined in .claude/skills/batch-skill/SKILL.md, which is the SSOT. maxParallelTasks is a ceiling, not a licence: it can only lower concurrency, never authorise parallelism that the CONFIRMED-only evidence bar has not already permitted. An unknown key, a wrong type, or maxParallelTasks < 1 is a CONFIG ERROR and blocks the batch. The v1.0 roadmap and its phases live in GitHub Issue #6, not here.",
+  "maxParallelTasks": 2
+}
