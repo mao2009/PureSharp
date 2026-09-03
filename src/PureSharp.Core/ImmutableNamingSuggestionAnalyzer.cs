@@ -22,7 +22,7 @@ public class ImmutableNamingSuggestionAnalyzer : DiagnosticAnalyzer
         category: "Naming",
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: new LocalizableResourceString(nameof(DiagnosticResources.FIF0001_Description), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)));
+        description: new LocalizableResourceString(nameof(DiagnosticResources.LVP0003_Description), DiagnosticResources.ResourceManager, typeof(DiagnosticResources)));
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
