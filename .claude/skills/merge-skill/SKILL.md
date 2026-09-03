@@ -39,6 +39,9 @@ merge is BLOCKED.
 
 - Fail closed: any error, ambiguity, or missing evidence blocks the merge.
 - Explicit human approval is required before merge execution.
+- Repository policy takes precedence over this skill. Where the repository requires
+  approving reviews, that requirement cannot be bypassed by any means described here.
+- A self-authored PR is never recorded as carrying its author's GitHub approval.
 - Auto-merge is never enabled by this skill.
 - Verification is bound to an exact commit SHA; stale evidence never satisfies a gate.
 - UNVERIFIED blocks. INFERRED does not satisfy a gate.
@@ -125,21 +128,57 @@ A CI result for any other commit is stale. Stale CI is UNVERIFIED and blocks.
 
 ### E. Reviews
 
-- Effective human approvals, computed per "Approval Semantics" below
+- Effective third-party approvals, computed per "Approval Semantics" below
 - The required approval count in force
 - No blocking review state outstanding
 
-### F. Mergeability
+### F. Mergeability and repository policy
 
 - No merge conflicts with the base branch
 - Repository merge state reported by the host
-- Any required repository policy checks (branch protection, required checks) satisfied
+- **Whether the repository requires approving reviews** on the base branch (branch
+  protection or ruleset), and how many. This determines which approval source is
+  permitted — it is not optional context
+- Any other required repository policy checks satisfied
+- The configured merge method is one the repository actually allows
+
+If the repository reports **no** branch protection and **no** applicable ruleset, that is
+a CONFIRMED finding of "no third-party review required" — record it explicitly as such.
+If the policy cannot be read at all, it is **UNVERIFIED → MERGE BLOCKED**; absence of
+evidence is not evidence of absence.
 
 ### G. Human approval
 
-- Explicit human approval to execute the merge of this specific PR at this specific SHA
+- Explicit human approval to execute the merge of this specific PR at this specific SHA,
+  from one of the two sources in "Approval Semantics", with the source named in the report
 
 ## Approval Semantics
+
+The human approval gate may be satisfied by exactly one of two sources. Which source
+applies is determined by repository policy and PR authorship — never by preference,
+convenience, or configuration.
+
+| Source | When it applies |
+|---|---|
+| **1. GitHub review approval** | The normal path: a third-party reviewer submits an `APPROVED` review. |
+| **2. Explicit out-of-band human approval** | Only for a **self-authored PR** in a repository whose policy does **not** require third-party review. |
+
+**Repository policy always wins.** Determine, from a trusted source, whether branch
+protection or a repository ruleset requires approving reviews on the base branch:
+
+- If the repository requires N approving reviews → that requirement is authoritative.
+  Source 1 is the only acceptable path, and N GitHub `APPROVED` reviews are required.
+  **Out-of-band approval can never substitute for, bypass, or reduce it.**
+- If that requirement cannot be determined → **UNVERIFIED → MERGE BLOCKED**. Never
+  assume a repository is unprotected.
+
+**Never fabricate a review record.** A self-authored PR must not be recorded, reported,
+or counted as carrying a GitHub `APPROVED` review by its own author. GitHub does not
+permit author self-approval; claiming one is falsifying evidence. When source 2 applies,
+report it explicitly as out-of-band approval, and report the GitHub approval count as the
+true value (typically 0).
+
+### Source 1 — GitHub review approval
 
 This is a contract, not an implementation. Any source that can answer these questions is
 acceptable, provided it can report, per review: the reviewer identity, whether the
@@ -177,13 +216,46 @@ Automated review tooling never contributes a human approval, regardless of verdi
 
 **Outcomes:**
 
-- Effective human approvals ≥ required count, and no blocking review → gate CONFIRMED.
-- Effective human approvals < required count → **MERGE BLOCKED**.
+- Effective third-party approvals ≥ `requiredApprovals`, and no blocking review → gate CONFIRMED.
+- Effective third-party approvals < `requiredApprovals` → **MERGE BLOCKED**, unless source 2 applies.
 - Any reviewer's latest effective state is `CHANGES_REQUESTED` → **MERGE BLOCKED**.
+  A blocking review blocks under **both** sources; out-of-band approval never overrides it.
 - Review data cannot be obtained or is incomplete → **UNVERIFIED → MERGE BLOCKED**.
 
+### Source 2 — Explicit out-of-band human approval (self-authored PRs)
+
+A single maintainer cannot approve their own pull request on GitHub. Requiring a GitHub
+`APPROVED` review in that situation would make the gate permanently unsatisfiable, which
+is a broken gate, not a safe one. This source exists for exactly that case.
+
+**Out-of-band approval does not mean "approval is not required".** It means the approval
+is recorded here rather than as a GitHub review, under stricter conditions.
+
+**All of the following must hold:**
+
+- [ ] The PR is **self-authored** — the approver is the PR author
+- [ ] Repository policy does **not** require third-party approving reviews (determined,
+      not assumed)
+- [ ] No reviewer has an outstanding `CHANGES_REQUESTED`
+- [ ] Every technical gate (A–F) is CONFIRMED for the verification SHA
+- [ ] An explicit approval record exists, containing all of:
+  - PR number
+  - **Exact PR HEAD SHA** being approved
+  - An explicit statement approving the merge (not general praise, not "looks good",
+    not silence)
+  - Approver identity
+  - Approval timestamp and context
+
+If any box is unchecked → **MERGE BLOCKED**.
+
+**HEAD binding is absolute here.** The approval is valid for the named SHA and nothing
+else. If the PR HEAD changes for any reason, the out-of-band approval is **invalidated**
+and a fresh explicit approval for the new SHA is required. An approval for an earlier SHA
+is never carried forward.
+
 Approval is never inferred from a passing build, from elapsed time, from a comment that
-reads as positive, or from the absence of objection.
+reads as positive, from the absence of objection, or from the fact that the same person
+wrote the code.
 
 ## HEAD Binding
 
@@ -235,6 +307,12 @@ nothing, and is safe to run at any time.
 No shell-specific command is prescribed. Choose the mechanism from the trusted sources
 available, honouring the repository's merge policy and the configured merge method.
 
+**The configured `mergeMethod` must be a method the repository actually allows.** Read
+the repository's enabled merge methods from a trusted source and compare. A configured
+method that the repository does not permit, or that the host cannot execute, is a
+**CONFIGURATION ERROR → MERGE BLOCKED** — not UNVERIFIED, and never silently substituted
+for a different method. Never pick a method the configuration did not specify.
+
 **Prefer a mechanism that lets you state the expected HEAD**, so the host itself refuses
 the merge if the PR moved. Where the host supports it, pass the expected SHA rather than
 merging whatever is current.
@@ -277,8 +355,13 @@ does not retroactively confirm what was never checked.
 | Any gate item only INFERRED | **MERGE BLOCKED** |
 | CI failed, pending, queued, or in progress | **MERGE BLOCKED** |
 | CI belongs to a different SHA than PR HEAD | **MERGE BLOCKED** (stale) |
-| Effective human approvals below required count | **MERGE BLOCKED** |
-| Any `CHANGES_REQUESTED` outstanding | **MERGE BLOCKED** |
+| Third-party approvals below `requiredApprovals`, and source 2 does not apply | **MERGE BLOCKED** |
+| Any `CHANGES_REQUESTED` outstanding (under either approval source) | **MERGE BLOCKED** |
+| Repository requires approving reviews, and they are absent | **MERGE BLOCKED** — out-of-band cannot substitute |
+| Repository review requirement cannot be determined | **UNVERIFIED → MERGE BLOCKED** |
+| Out-of-band approval named a different SHA than the verification SHA | **MERGE BLOCKED** — re-approval required |
+| Out-of-band approval claimed for a PR the approver did not author | **MERGE BLOCKED** |
+| `mergeMethod` invalid, or not enabled in repository settings | **CONFIG ERROR → MERGE BLOCKED** |
 | Merge conflict, or mergeability unknown | **MERGE BLOCKED** |
 | Working tree dirty at local verification | **MERGE BLOCKED** |
 | PR HEAD changed mid-verification | **BLOCKED**, restart verification |
@@ -298,8 +381,8 @@ Schema:
 
 | Key | Type | Meaning |
 |---|---|---|
-| `requiredApprovals` | integer ≥ 1 | Effective human approvals required. Must be at least 1; there is no way to require zero. |
-| `mergeMethod` | `"merge"` \| `"squash"` \| `"rebase"` \| `"ff-only"` | Merge method to use during MERGE EXECUTION. |
+| `requiredApprovals` | integer ≥ 1 | Number of **third-party** GitHub `APPROVED` reviews required (source 1). Must be at least 1; there is no way to require zero. It does **not** count the PR author, and it is not a switch for source 2. |
+| `mergeMethod` | `"merge"` \| `"squash"` \| `"rebase"` | Merge method to use during MERGE EXECUTION. These are the only methods GitHub can execute for a pull request. |
 | `deleteBranchAfterMerge` | boolean | Whether the PR branch is eligible for deletion after a confirmed merge. |
 
 Rules:
@@ -307,9 +390,14 @@ Rules:
 - Missing file, malformed JSON, an unknown key, a key of the wrong type, or
   `requiredApprovals < 1` → **CONFIG ERROR → MERGE BLOCKED**. There is no default
   fallback for `requiredApprovals`.
+- `mergeMethod` outside the three values above → **CONFIG ERROR → MERGE BLOCKED**.
+  `ff-only` is **not** a valid value: GitHub's pull request merge offers only merge,
+  squash, and rebase, so a fast-forward-only method cannot be executed through it.
+- `mergeMethod` not enabled in the repository's settings → **CONFIG ERROR → MERGE BLOCKED**.
 - Anything not in the table above is not configurable. Human approval, fail-closed
-  behaviour, HEAD binding, and auto-merge being disabled are fixed policy and are
-  deliberately absent from the schema so they cannot be switched off.
+  behaviour, HEAD binding, repository-policy precedence, the conditions under which
+  out-of-band approval is permitted, and auto-merge being disabled are all fixed policy,
+  deliberately absent from the schema so they cannot be switched off or loosened.
 
 ## Report Format
 

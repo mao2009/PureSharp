@@ -130,6 +130,9 @@ evidence — including approvals already given.
 | Merge conflict | Rebase the feature branch on the base branch, resolve, test, push, re-verify |
 | Base branch moved | Re-verify; rebase if the move invalidates the verification |
 | Approvals insufficient | Request review. Never substitute an automated verdict for a human approval |
+| Repository requires reviews, none present | Obtain the required third-party reviews. Out-of-band approval cannot substitute |
+| Self-authored PR, no third-party reviewer available | Use the out-of-band approval path in `merge-skill/SKILL.md`, bound to the exact HEAD SHA. Never record a self-approval as a GitHub review |
+| `mergeMethod` not enabled in the repository | CONFIG ERROR. Fix the configuration; never silently merge by another method |
 | Changes requested | Address the review, push, obtain a fresh approval on the new HEAD |
 | PR HEAD changed mid-verification | Restart verification from the top |
 | Required evidence unobtainable | UNVERIFIED → BLOCKED. Find another trusted source; do not skip the check |

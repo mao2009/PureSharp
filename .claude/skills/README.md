@@ -47,7 +47,12 @@ These are fixed policy. No configuration, flag, or argument relaxes them.
 
 1. **Fail closed.** Any error, ambiguity, or missing evidence blocks.
 2. **Explicit human approval before every merge.** Technical verification success is not
-   permission to merge.
+   permission to merge. The approval comes from one of exactly two sources — a
+   third-party GitHub `APPROVED` review, or, for a self-authored PR in a repository that
+   requires no third-party review, an explicit out-of-band approval bound to the exact
+   HEAD SHA. **Repository policy always wins**: where the repository requires approving
+   reviews, nothing here bypasses it. A self-authored PR is never recorded as carrying
+   its author's GitHub approval.
 3. **Evidence is bound to an exact commit.** Stale evidence never satisfies a gate; a new
    push invalidates all prior evidence, approvals included.
 4. **UNVERIFIED blocks. INFERRED never opens a gate.**
