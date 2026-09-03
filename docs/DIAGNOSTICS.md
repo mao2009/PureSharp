@@ -18,6 +18,9 @@ Every diagnostic PureSharp can report is listed here. There are no unlisted diag
 Emitted by `ReferentialTransparencyAnalyzer`. These apply **only inside methods marked
 with `[PureMethod]`**.
 
+The purity model these diagnostics approximate — and, importantly, the cases v1.0 does
+**not** detect — is specified in [`PURITY-SEMANTICS.md`](PURITY-SEMANTICS.md).
+
 | Field | Value |
 |---|---|
 | **ID** | `RT0001` |
