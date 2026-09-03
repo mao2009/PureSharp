@@ -112,6 +112,11 @@ PureSharp uses Roslyn's standard `.editorconfig` mechanism for configuring diagn
 | **LVP0003** | Naming | Naming suggestion for effectively immutable variables | Warning |
 | **FIF0001** | FluentIf | FluentIf chain not terminated with .Else() | Error |
 
+The complete diagnostic contract — full message text, target conditions, the v1.0 public
+contract surface, ID naming and category policy, and the compatibility rules for adding
+or changing a diagnostic — is defined in [`docs/DIAGNOSTICS.md`](docs/DIAGNOSTICS.md),
+which is the single source of truth.
+
 ### Configuration Example
 
 Create (or update) `.editorconfig` in your project root:
