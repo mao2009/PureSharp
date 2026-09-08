@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PureSharp Diagnostics | RT, LVP, and FluentIf Roslyn Rules</title>
+  <meta name="description" content="Reference overview for PureSharp Roslyn diagnostics covering referential transparency, immutable local variables, naming guidance, and FluentIf validation in C#.">
+  <link rel="canonical" href="https://mao2009.github.io/PureSharp/diagnostics.html"><link rel="stylesheet" href="assets/site.css">
+</head>
+<body><header><nav><a class="brand" href="./">PureSharp</a><span><a href="features.html">Features</a><a href="diagnostics.html">Diagnostics</a><a href="https://github.com/mao2009/PureSharp">GitHub</a></span></nav></header>
+<main><h1>PureSharp diagnostics</h1><p class="lead">PureSharp exposes seven documented diagnostics across referential transparency, local-variable purity, naming, and FluentIf validation.</p>
+<table><thead><tr><th>ID</th><th>Purpose</th><th>Default</th></tr></thead><tbody>
+<tr><td>RT0001</td><td>Static mutable field access in <code>[PureMethod]</code></td><td>Error</td></tr>
+<tr><td>RT0002</td><td>Non-pure method call in <code>[PureMethod]</code></td><td>Error</td></tr>
+<tr><td>RT0003</td><td>I/O operation in <code>[PureMethod]</code></td><td>Error</td></tr>
+<tr><td>LVP0001</td><td>Reassignment to an immutable local</td><td>Error</td></tr>
+<tr><td>LVP0002</td><td>Immutable local missing declaration-time initialization</td><td>Error</td></tr>
+<tr><td>LVP0003</td><td>Suggestion for an effectively immutable local</td><td>Warning</td></tr>
+<tr><td>FIF0001</td><td>FluentIf chain not terminated with <code>.Else(...)</code></td><td>Error</td></tr>
+</tbody></table>
+<section><h2>Configuration</h2><pre><code>[*.cs]
+dotnet_diagnostic.RT0001.severity = error
+dotnet_diagnostic.LVP0003.severity = warning
+</code></pre><p>For the complete diagnostic contract, triggering conditions, compatibility rules, and message semantics, read <a href="https://github.com/mao2009/PureSharp/blob/main/docs/DIAGNOSTICS.md">docs/DIAGNOSTICS.md</a>.</p></section>
+</main><footer><p><a href="https://github.com/mao2009/PureSharp">PureSharp on GitHub</a>.</p></footer></body></html>
