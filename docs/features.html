@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PureSharp Features | C# Purity, Immutability, and FluentIf</title>
+  <meta name="description" content="Explore PureSharp features for C#: PureMethod referential-transparency checks, immutable local-variable conventions, FluentIf validation, and Roslyn analyzer integration.">
+  <link rel="canonical" href="https://mao2009.github.io/PureSharp/features.html"><link rel="stylesheet" href="assets/site.css">
+</head>
+<body><header><nav><a class="brand" href="./">PureSharp</a><span><a href="features.html">Features</a><a href="diagnostics.html">Diagnostics</a><a href="https://github.com/mao2009/PureSharp">GitHub</a></span></nav></header>
+<main><h1>PureSharp features</h1>
+<section><h2>PureMethod checks</h2><p>Annotate methods with <code>[PureMethod]</code> to ask PureSharp to verify selected referential-transparency constraints. The analyzer reports mutable static field access, calls to methods that are not known to be pure, and I/O operations inside marked methods.</p></section>
+<section><h2>Immutable local variables</h2><p>PureSharp uses an explicit naming convention for immutable locals: names beginning with an underscore are treated as immutable variables. They must be initialized at declaration and cannot be reassigned. Effectively immutable ordinary locals can also receive a naming suggestion.</p></section>
+<section><h2>FluentIf</h2><p><code>Fluent.If</code> provides expression-oriented conditional flow. The analyzer verifies that a chain is terminated with <code>.Else(...)</code>, preventing incomplete fluent conditions from becoming unnoticed logic errors.</p></section>
+<section><h2>Roslyn-native workflow</h2><p>PureSharp diagnostics appear during normal IDE analysis and <code>dotnet build</code>. Severity can be configured with standard <code>dotnet_diagnostic.&lt;ID&gt;.severity</code> settings in <code>.editorconfig</code>.</p></section>
+<section><h2>Project components</h2><ul><li><strong>PureSharp.Core</strong> — attributes and runtime utilities.</li><li><strong>PureSharp.Analyzers</strong> — compile-time Roslyn diagnostics.</li><li><strong>PureSharp.Analyzers.Tests</strong> — analyzer behavior tests.</li></ul></section>
+</main><footer><p><a href="https://github.com/mao2009/PureSharp">Source code and contribution history on GitHub</a>.</p></footer></body></html>
