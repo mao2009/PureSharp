@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PureSharp | C# Roslyn Analyzer for Referential Transparency and Immutability</title>
+  <meta name="description" content="PureSharp is an open-source C# Roslyn analyzer and library for referential transparency, immutable local variables, and safer functional-style control flow.">
+  <link rel="canonical" href="https://mao2009.github.io/PureSharp/">
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header><nav><a class="brand" href="./">PureSharp</a><span><a href="features.html">Features</a><a href="diagnostics.html">Diagnostics</a><a href="https://github.com/mao2009/PureSharp">GitHub</a></span></nav></header>
+<main>
+<section class="hero"><p class="eyebrow">Functional programming support for C#</p><h1>PureSharp</h1><p class="lead">A Roslyn-based toolset that brings compile-time checks for referential transparency, local-variable immutability, and safer functional-style control flow to C#.</p><p>PureSharp helps developers make purity and immutability explicit and mechanically verifiable instead of relying only on conventions and code review.</p><p><a class="button" href="https://www.nuget.org/packages/loach.PureSharp">Get PureSharp on NuGet</a> <a class="button secondary" href="https://github.com/mao2009/PureSharp">View on GitHub</a></p></section>
+<section><h2>What PureSharp checks</h2><div class="grid"><article><h3>Referential transparency</h3><p>Methods marked with <code>[PureMethod]</code> are checked for mutable static state, non-pure calls, and I/O operations.</p></article><article><h3>Immutable local variables</h3><p>Locals using PureSharp's underscore convention can be required to initialize once and never be reassigned.</p></article><article><h3>Fluent conditional flow</h3><p><code>Fluent.If</code> chains are checked so incomplete conditional expressions do not silently escape validation.</p></article></div></section>
+<section><h2>Why use it?</h2><p>C# supports functional programming techniques, but the language does not mechanically enforce referential transparency or immutable local variables. PureSharp uses Roslyn diagnostics to turn selected functional-programming constraints into build-time feedback.</p></section>
+<section><h2>Open source and configurable</h2><p>Diagnostics use standard <code>.editorconfig</code> severity controls. PureSharp is MIT licensed and its analyzer behavior is documented in a versioned diagnostic contract.</p></section>
+</main>
+<footer><p>PureSharp is an independent open-source C# project.</p></footer>
+</body>
+</html>
