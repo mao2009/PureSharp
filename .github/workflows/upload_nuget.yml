@@ -7,6 +7,9 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
   build-test:
     runs-on: ubuntu-latest
@@ -19,24 +22,124 @@ jobs:
         with:
           dotnet-version: '10.0.103'
 
-      - name: Restore dependencies
-        run: dotnet restore
+      - name: Verify release pipeline
+        run: bash scripts/verify-release.sh
 
-      - name: Build
-        run: dotnet build --configuration Release --no-restore
+      - name: Upload release package
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-package
+          path: out/*.nupkg
+          if-no-files-found: error
 
-      - name: Test
-        run: dotnet test --configuration Release --no-build --verbosity normal
+  request-release-tag:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Pack NuGet package
-        run: dotnet pack src/PureSharp.Core/PureSharp.Core.csproj --configuration Release -o out --no-build
+      - name: Create explicitly requested release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          request_file="release/requested-version.txt"
+          if [[ ! -f "$request_file" ]]; then
+            echo "No release request marker; nothing to tag."
+            exit 0
+          fi
 
-      - name: Verify packaged consumer experience
-        run: bash scripts/verify-consumer-package.sh out
+          requested="$(tr -d '[:space:]' < "$request_file")"
+          version="$(sed -n 's:.*<Version>\([^<]*\)</Version>.*:\1:p' Directory.Build.props | head -n1)"
+          if [[ -z "$requested" || "$requested" != "$version" ]]; then
+            echo "Release request/version mismatch: request=$requested SSOT=$version" >&2
+            exit 1
+          fi
 
-      - name: Verify analyzer performance budget
-        run: bash scripts/verify-analyzer-performance.sh out
+          tag="v${version}"
+          if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
+            echo "$tag already exists; no new tag created."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "$tag" "$GITHUB_SHA"
+          git push origin "refs/tags/$tag"
+          echo "Created $tag at $GITHUB_SHA after the main release gate passed."
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.103'
+
+      - name: Download verified package
+        uses: actions/download-artifact@v4
+        with:
+          name: release-package
+          path: out
+
+      - name: Verify tag, SSOT and package versions match
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(sed -n 's:.*<Version>\([^<]*\)</Version>.*:\1:p' Directory.Build.props | head -n1)"
+          tag_version="${GITHUB_REF_NAME#v}"
+          if [[ -z "$version" || "$version" != "$tag_version" ]]; then
+            echo "Tag/version mismatch: tag=$GITHUB_REF_NAME SSOT=$version" >&2
+            exit 1
+          fi
+          package="out/loach.PureSharp.${version}.nupkg"
+          if [[ ! -f "$package" ]]; then
+            echo "Expected package not found: $package" >&2
+            exit 1
+          fi
+          nuspec_version="$(unzip -p "$package" '*.nuspec' | sed -n 's:.*<version>\([^<]*\)</version>.*:\1:p' | head -n1)"
+          if [[ "$nuspec_version" != "$version" ]]; then
+            echo "Package/version mismatch: package=$nuspec_version SSOT=$version" >&2
+            exit 1
+          fi
+
+      - name: Create draft GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" out/*.nupkg --clobber
+          else
+            args=(release create "$tag" out/*.nupkg --verify-tag --generate-notes --draft --title "PureSharp $tag")
+            if [[ "$tag" == *-* ]]; then
+              args+=(--prerelease)
+            fi
+            gh "${args[@]}"
+          fi
 
       - name: Push NuGet package
-        if: startsWith(github.ref, 'refs/tags/v')
         run: dotnet nuget push "out/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Verify published package from NuGet.org
+        run: bash scripts/verify-published-package.sh "${GITHUB_REF_NAME#v}"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "$GITHUB_REF_NAME" --draft=false
