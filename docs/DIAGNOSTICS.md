@@ -8,6 +8,8 @@ the intent and the other two must be corrected to match it.
 - Applies to: PureSharp v1.0.0
 - Diagnostics are configured through Roslyn's standard `.editorconfig` mechanism
   (`dotnet_diagnostic.<ID>.severity`). See the README for configuration examples.
+- Minimal violating/fixed examples for every public rule are in
+  [`RULE-EXAMPLES.md`](RULE-EXAMPLES.md).
 
 ## Catalog
 
@@ -68,7 +70,7 @@ underscore `_` is the discard symbol and is never treated as an immutable local.
 | **Title** | Reassignment to immutable local variable prohibited |
 | **Message** | Cannot reassign a value to immutable local variable `'{0}'` |
 | **Description** | Local variables starting with an underscore (`_`) are treated as immutable, and reassignment after declaration is prohibited. |
-| **Target** | Assignment, compound assignment, or increment/decrement targeting an immutable local |
+| **Target** | Simple/compound/increment/decrement assignment, `ref`/`out` argument mutation, or deconstruction reassignment targeting an immutable local |
 
 | Field | Value |
 |---|---|
@@ -79,7 +81,7 @@ underscore `_` is the discard symbol and is never treated as an immutable local.
 | **Title** | Mandatory initialization of immutable local variable |
 | **Message** | Immutable local variable `'{0}'` must be initialized at the time of declaration |
 | **Description** | Local variables starting with an underscore (`_`) are treated as immutable and must be assigned an initial value at declaration. |
-| **Target** | Declaration of an immutable local with no initializer |
+| **Target** | Explicit immutable-local declaration with no initializer; implicitly initialized constructs such as `foreach` variables are excluded |
 
 | Field | Value |
 |---|---|
@@ -89,7 +91,7 @@ underscore `_` is the discard symbol and is never treated as an immutable local.
 | **Enabled by default** | Yes |
 | **Title** | Suggestion to apply naming convention for immutable local variable |
 | **Message** | Local variable `'{0}'` is effectively immutable. Consider starting its name with an underscore `'_'`. |
-| **Description** | Local variables that are never reassigned can have their immutability explicitly shown by starting the name with an underscore. |
+| **Description** | Local variables that are never reassigned can have their immutability explicitly shown by starting the name with `_`. |
 | **Target** | A local variable that is never reassigned but whose name does not begin with `_` |
 
 ### FIF — FluentIf
@@ -105,7 +107,7 @@ Emitted by `FluentIfAnalyzer`.
 | **Title** | FluentIf chain termination check |
 | **Message** | FluentIf chain must be terminated with `'.Else(...)'` |
 | **Description** | Method chains starting with `Fluent.If()` must always end with `.Else()`. |
-| **Target** | A `Fluent.If()` chain not terminated by `.Else(...)` |
+| **Target** | A resolved `PureSharp.Core.Fluent.If(...)` condition chain that does not reach the matching `ConditionResult<T>.Else(...)` or `ConditionAction.Else(...)` terminator |
 
 ## Summary table
 

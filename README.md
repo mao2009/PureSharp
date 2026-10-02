@@ -4,168 +4,131 @@
 
 [![CI & NuGet Upload](https://github.com/mao2009/PureSharp/actions/workflows/upload_nuget.yml/badge.svg)](https://github.com/mao2009/PureSharp/actions/workflows/upload_nuget.yml) [![NuGet](https://img.shields.io/nuget/v/loach.PureSharp.svg)](https://www.nuget.org/packages/loach.PureSharp) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![X (Twitter) Follow](https://img.shields.io/twitter/follow/loach_mao)](https://x.com/loach_mao)
 
-**PureSharp** is a toolset designed to strongly support "referential transparency" and "immutability" in C#, bringing the safety of functional programming to C#. It leverages Roslyn analyzers to enforce robust, bug-resistant code writing at the compilation level.
+**PureSharp** brings functional-programming safety to C# through Roslyn analyzers and a small runtime API. It focuses on three contracts: referential transparency, immutable local variables, and safe FluentIf termination.
 
-## Core Concepts
+## Install
 
-1.  **Purity Enforcement:** Explicitly declare logic without side effects and verify it mechanically.
-2.  **Immutability Introduction:** Achieve "non-reassignable local variables," a feature lacking in the language specification, through intuitive naming conventions.
-3.  **Safe Control Flow:** Provide pipeline-style conditional branching to prevent runtime exceptions and oversights.
+```bash
+dotnet add package loach.PureSharp
+```
 
-## Key Features
+The package contains both `PureSharp.Core` and the analyzer assembly. No PureSharp-specific configuration file is required; diagnostics use standard Roslyn `.editorconfig` settings.
 
-### 1. PureSharp.Core
-Provides fundamental attributes and utilities.
+For a clean-project walkthrough, use [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md).
 
-*   **`[PureMethod]` attribute**: Declares a method as "pure" (referentially transparent).
-*   **`Fluent.If`**: A fluent interface that allows `if-else` statements to be written as expressions.
+## Core concepts
 
-### 2. PureSharp.Analyzers (Roslyn Analyzers)
-Monitors code writing in real-time and reports rule violations.
+1. **Purity enforcement:** declare side-effect-free logic with `[PureMethod]` and verify the documented v1 subset mechanically.
+2. **Immutable locals:** opt into non-reassignable local variables by starting their names with `_`.
+3. **Safe control flow:** use `Fluent.If` chains that must terminate with `.Else(...)`.
 
-#### Referential Transparency Verification (RTxxxx)
-An `Error` is reported when a method annotated with `[PureMethod]` performs the following operations:
-*   Accessing static, mutable (non-readonly) fields.
-*   Calling non-pure methods (methods without `[PureMethod]`).
-*   I/O operations (access to Console, File, Network, etc.).
+## Key features
 
-#### Local Variable Immutability Enforcement (LVPxxxx)
-Achieves immutability using a naming convention that starts with an underscore (`_`).
-*   **Mandatory Immutability**: Prohibits reassignment to local variables starting with `_` (Error).
-*   **Initialization Enforcement**: Variables starting with `_` must be initialized at the time of declaration (Error).
-*   **Naming Suggestion**: Suggests adding an underscore (`_`) to variables that have never been reassigned (Warning).
+### `[PureMethod]`
 
-#### FluentIf Termination Check (FIFxxxx)
-*   Verifies that chains starting with `Fluent.If` are correctly terminated with `.Else()`. Failure to terminate will result in a compile error.
-*   Nested chains, lambdas, generic type inference, runtime branch evaluation, and exception behavior are part of the v1 contract documented in [`docs/FLUENT_IF.md`](docs/FLUENT_IF.md).
-
----
-
-## Quick Start
-
-### 1. Writing Referentially Transparent Methods
 ```csharp
 using PureSharp.Core;
 
-public class Calculator
+public static class Calculator
 {
-    private static int _globalCache; // Mutable static field
-
     [PureMethod]
-    public int Add(int a, int b)
-    {
-        // OK: Calculation only
-        return a + b; 
-        
-        // NG: Accessing static field causes RT0001 error
-        // _globalCache = a + b; 
-        
-        // NG: I/O operations cause RT0003 error
-        // Console.WriteLine(a); 
-    }
+    public static int Add(int a, int b) => a + b;
 }
 ```
 
-### 2. Utilizing Immutable Local Variables
+Inside `[PureMethod]`, PureSharp reports static mutable-state access, non-pure method calls, and I/O according to the v1 contract. PureSharp does **not** claim to prove whole-program purity; see [`docs/PURITY-SEMANTICS.md`](docs/PURITY-SEMANTICS.md) and [`docs/CALL-CONTRACT.md`](docs/CALL-CONTRACT.md) for the exact guarantee boundary.
+
+### Immutable local variables
+
 ```csharp
-public void Process()
-{
-    int _result = Calculate(); // Declared as an immutable variable
-    
-    // NG: Attempting to reassign causes LVP0001 error
-    // _result = 10; 
-    
-    int count = 0; // Regular variable
-    // Suggestion: If not reassigned, a warning to change to "_count" (LVP0003)
-}
+var _value = Calculate();
+// _value = 10; // LVP0001
 ```
 
-### 3. Safe Conditional Branching (FluentIf)
+Underscore-prefixed locals must be initialized at declaration and cannot later be mutated through covered assignment paths. `LVP0003` suggests the convention for effectively immutable locals. See [`docs/LVP.md`](docs/LVP.md).
+
+### FluentIf
+
 ```csharp
-int status = Fluent.If(score >= 80, () => 1)
-                   .ElseIf(score >= 60, () => 2)
-                   .Else(0); // Forgetting .Else() causes FIF0001 error
+var _status = Fluent.If(score >= 80, () => 1)
+    .ElseIf(score >= 60, () => 2)
+    .Else(0);
 ```
 
----
+A chain that starts with `Fluent.If(...)` must reach the matching `.Else(...)`; otherwise `FIF0001` is reported. Nested chains, lambdas, generic inference, branch short-circuiting, and exception behavior are specified in [`docs/FLUENT_IF.md`](docs/FLUENT_IF.md).
 
-## Project Structure
+## Supported diagnostics
 
-*   **PureSharp.Core**: Provides core attributes and runtime libraries (.NET 10.0 / netstandard2.0).
-*   **PureSharp.Analyzers**: The main Roslyn analyzer (netstandard2.0).
-*   **PureSharp.Analyzers.Tests**: Unit tests to verify analyzer behavior (xUnit).
-
----
-
-## Diagnostic Configuration
-
-PureSharp uses Roslyn's standard `.editorconfig` mechanism for configuring diagnostic severity. You can control how each diagnostic is reported (error, warning, or suppressed) using the `dotnet_diagnostic.<ID>.severity` setting.
-
-### Supported Diagnostics
-
-| Diagnostic ID | Category | Title | Default Severity |
+| Diagnostic ID | Category | Title | Default severity |
 |---|---|---|---|
-| **RT0001** | Purity | Static field access in [PureMethod] | Error |
-| **RT0002** | Purity | Non-pure method call in [PureMethod] | Error |
-| **RT0003** | Purity | I/O operation in [PureMethod] | Error |
+| **RT0001** | Purity | Static field access in `[PureMethod]` | Error |
+| **RT0002** | Purity | Non-pure method call in `[PureMethod]` | Error |
+| **RT0003** | Purity | I/O operation in `[PureMethod]` | Error |
 | **LVP0001** | Purity | Reassignment to immutable local variable prohibited | Error |
 | **LVP0002** | Purity | Mandatory initialization of immutable local variable | Error |
 | **LVP0003** | Naming | Suggestion to apply naming convention for immutable local variable | Warning |
 | **FIF0001** | FluentIf | FluentIf chain termination check | Error |
 
-The complete diagnostic contract — full message text, target conditions, the v1.0 public
-contract surface, ID naming and category policy, and the compatibility rules for adding
-or changing a diagnostic — is defined in [`docs/DIAGNOSTICS.md`](docs/DIAGNOSTICS.md),
-which is the single source of truth.
+The authoritative contract is [`docs/DIAGNOSTICS.md`](docs/DIAGNOSTICS.md). Minimal examples for every rule are in [`docs/RULE-EXAMPLES.md`](docs/RULE-EXAMPLES.md).
 
-### Configuration Example
+## Diagnostic configuration
 
-Create (or update) `.editorconfig` in your project root:
+Create or update `.editorconfig` in the consumer project:
 
 ```editorconfig
-# .editorconfig
-
 root = true
 
 [*.cs]
-# Configure PureSharp diagnostic severities
-# Valid values: none, silent, suggestion, warning, error
-
-# Referential Transparency (RT) - default: error
 dotnet_diagnostic.RT0001.severity = error
 dotnet_diagnostic.RT0002.severity = error
 dotnet_diagnostic.RT0003.severity = error
-
-# Local Variable Purity (LVP) - default: error/warning
 dotnet_diagnostic.LVP0001.severity = error
 dotnet_diagnostic.LVP0002.severity = error
 dotnet_diagnostic.LVP0003.severity = warning
-
-# FluentIf (FIF) - default: error
 dotnet_diagnostic.FIF0001.severity = error
 ```
 
-### Severity Levels
+Use normal Roslyn values (`none`, `silent`, `suggestion`, `warning`, `error`). For staged adoption, override individual IDs instead of enabling/disabling whole rule families through a custom mechanism.
 
-- **error**: Build fails if the diagnostic is triggered
-- **warning**: Displays a warning but build succeeds
-- **suggestion**: Minor suggestion (often used for code quality hints)
-- **silent**: Suppresses the diagnostic from output but analysis still runs
-- **none**: Completely suppresses the diagnostic
-
-### Example: Suppressing a Diagnostic
+Example:
 
 ```editorconfig
 [*.cs]
-# Suppress LVP0003 (naming suggestions)
 dotnet_diagnostic.LVP0003.severity = none
 ```
 
----
+## Compatibility and known limitations
 
-## Motivation for Development
-C# is a very powerful language, but in large-scale development or complex logic, debugging can become difficult due to unintended side effects or variable reuse. PureSharp was born to provide developers with "freedom (from bugs)" in the form of "constraints."
+PureSharp.Core and the analyzer target `netstandard2.0`; the supported compiler/Roslyn policy and measured performance gate are documented in [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md).
 
----
+The v1 purity analyzer intentionally has documented boundaries. A clean analysis means that no violation of the **supported subset** was found, not that the method has been formally proven referentially transparent. Read the purity and call-contract documents before treating analyzer silence as a stronger guarantee.
+
+## Upgrading from 0.x
+
+See [`docs/MIGRATION-1.0.md`](docs/MIGRATION-1.0.md). The seven diagnostic IDs remain the v1 public IDs, while v1 hardens several edge cases such as immutable-local `ref`/`out` mutation, deconstruction reassignment, and FluentIf termination analysis.
+
+## Documentation
+
+- [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) — clean consumer Quick Start.
+- [`docs/DIAGNOSTICS.md`](docs/DIAGNOSTICS.md) — diagnostic SSOT and compatibility policy.
+- [`docs/RULE-EXAMPLES.md`](docs/RULE-EXAMPLES.md) — all seven diagnostics with examples.
+- [`docs/PURITY-SEMANTICS.md`](docs/PURITY-SEMANTICS.md) — RT semantics and known limitations.
+- [`docs/CALL-CONTRACT.md`](docs/CALL-CONTRACT.md) — `[PureMethod]` call rules.
+- [`docs/LVP.md`](docs/LVP.md) — immutable-local contract.
+- [`docs/FLUENT_IF.md`](docs/FLUENT_IF.md) — FluentIf contract.
+- [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md) — supported versions and performance policy.
+- [`docs/DOCUMENTATION.md`](docs/DOCUMENTATION.md) — documentation/translation SSOT policy.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — contribution workflow.
+
+## Project structure
+
+- **PureSharp.Core** — runtime API and Roslyn analyzers, packaged from `netstandard2.0`.
+- **PureSharp.Analyzers.Tests** — analyzer/runtime contract tests (xUnit; current CI uses .NET 10).
+
+## Motivation
+
+C# is powerful, but unintended side effects and variable reuse can make large codebases harder to reason about. PureSharp deliberately uses constraints to make those assumptions visible to the compiler and CI.
+
 ## License
-This project is released under the MIT License.
+
+PureSharp is released under the MIT License.

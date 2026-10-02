@@ -4,166 +4,117 @@
 
 [![CI & NuGet Upload](https://github.com/mao2009/PureSharp/actions/workflows/upload_nuget.yml/badge.svg)](https://github.com/mao2009/PureSharp/actions/workflows/upload_nuget.yml) [![NuGet](https://img.shields.io/nuget/v/loach.PureSharp.svg)](https://www.nuget.org/packages/loach.PureSharp) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![X (Twitter) Follow](https://img.shields.io/twitter/follow/loach_mao)](https://x.com/loach_mao)
 
----
+**PureSharp** は、Roslyn Analyzer と小さなランタイムAPIによって、C# に「参照透過性」「不変ローカル変数」「安全な FluentIf 終端」の契約を導入するツールです。
 
-# PureSharp
+## インストール
 
-**PureSharp** は、C# における「参照透過性」と「不変性」を強力に支援し、関数型プログラミングの安全性を C# に持ち込むためのツールセットです。Roslyn アナライザーを活用し、バグの入り込みにくい堅牢なコード記述をコンパイルレベルで強制します。
+```bash
+dotnet add package loach.PureSharp
+```
 
-## 核心となるコンセプト
+1つのパッケージに `PureSharp.Core` と Analyzer が含まれます。独自設定ファイルは使わず、Roslyn標準の `.editorconfig` で Diagnostic 単位に設定します。
 
-1.  **純粋性の強制 (Purity)**: 副作用のないロジックを明示し、機械的に検証します。
-2.  **不変性の導入 (Immutability)**: 言語仕様で不足している「再代入不可能なローカル変数」を直感的な命名規則で実現します。
-3.  **安全な制御フロー (Safe Flow)**: 実行時の例外や考慮漏れを防ぐ、パイプライン形式の条件分岐を提供します。
+clean project からの導入手順は [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) を参照してください。
 
 ## 主要機能
 
-### 1. PureSharp.Core
-基本となる属性とユーティリティを提供します。
+### `[PureMethod]`
 
-*   **`[PureMethod]` 属性**: メソッドが「純粋（参照透過）」であることを宣言します。
-*   **`Fluent.If`**: `if-else` 文を式として記述できる流れるようなインターフェース。
-
-### 2. PureSharp.Analyzers (Roslyn アナライザー)
-コードの書き方をリアルタイムで監視し、ルール違反を報告します。
-
-#### 参照透過性の検証 (RTxxxx)
-`[PureMethod]` が付与されたメソッドが以下の操作を行っている場合にエラー（Error）を出力します。
-*   静的かつ可変（non-readonly）なフィールドへのアクセス。
-*   非純粋なメソッド（`[PureMethod]` がないメソッド）の呼び出し。
-*   I/O 操作（Console, File, Network 等へのアクセス）。
-
-#### ローカル変数の不変性強制 (LVPxxxx)
-アンダースコア（`_`）で始まる命名規則を利用して、不変性を実現します。
-*   **強制不変**: `_` で始まるローカル変数への再代入を禁止します（Error）。
-*   **初期化強制**: `_` で始まる変数は宣言と同時に初期化する必要があります（Error）。
-*   **命名の推奨**: 一度も再代入されていない変数に対して、`_` を付けるよう提案します（Warning）。
-
-#### FluentIf の終端チェック (FIFxxxx)
-*   `Fluent.If` で始まるチェーンが `.Else()` で正しく終了しているかを検証します。終了していない場合はコンパイルエラーとなります。
-
----
-
-## クイックスタート
-
-### 1. 参照透過なメソッドの記述
 ```csharp
 using PureSharp.Core;
 
-public class Calculator
+public static class Calculator
 {
-    private static int _globalCache; // 可変な静的フィールド
-
     [PureMethod]
-    public int Add(int a, int b)
-    {
-        // OK: 計算のみ
-        return a + b; 
-        
-        // NG: 静的フィールドへのアクセスは RT0001 エラー
-        // _globalCache = a + b; 
-        
-        // NG: I/O操作は RT0003 エラー
-        // Console.WriteLine(a); 
-    }
+    public static int Add(int a, int b) => a + b;
 }
 ```
 
-### 2. 不変ローカル変数の活用
+`[PureMethod]` 内では、v1契約で定義された範囲の static mutable state、非pureメソッド呼び出し、I/O を検出します。ただし PureSharp は「すべての副作用を証明可能に検出する」ものではありません。正確な保証範囲は [`docs/PURITY-SEMANTICS.md`](docs/PURITY-SEMANTICS.md) と [`docs/CALL-CONTRACT.md`](docs/CALL-CONTRACT.md) がSSOTです。
+
+### 不変ローカル変数
+
 ```csharp
-public void Process()
-{
-    int _result = Calculate(); // 不変変数として宣言
-    
-    // NG: 再代入しようとすると LVP0001 エラー
-    // _result = 10; 
-    
-    int count = 0; // 普通の変数
-    // Suggestion: 再代入されないなら "_count" への変更を促す警告 (LVP0003)
-}
+var _value = Calculate();
+// _value = 10; // LVP0001
 ```
 
-### 3. 安全な条件分岐 (FluentIf)
+`_` で始まるローカル変数は宣言時初期化が必要で、v1で対象となる再代入経路では変更できません。詳細は [`docs/LVP.md`](docs/LVP.md) を参照してください。
+
+### FluentIf
+
 ```csharp
-int status = Fluent.If(score >= 80, () => 1)
-                   .ElseIf(score >= 60, () => 2)
-                   .Else(0); // .Else() を忘れると FIF0001 エラー
+var _status = Fluent.If(score >= 80, () => 1)
+    .ElseIf(score >= 60, () => 2)
+    .Else(0);
 ```
 
----
+`Fluent.If(...)` から始まるチェーンは対応する `.Else(...)` まで到達する必要があります。ネスト、lambda、generic推論、short-circuit、例外伝播の仕様は [`docs/FLUENT_IF.md`](docs/FLUENT_IF.md) にあります。
 
-## プロジェクト構成
+## v1 公開 Diagnostic
 
-*   **PureSharp.Core**: 基本となる属性とユーティリティを提供します。 (.NET 10.0 / netstandard2.0)
-*   **PureSharp.Analyzers**: Roslyn アナライザー本体 (netstandard2.0)
-*   **PureSharp.Analyzers.Tests**: アナライザーの挙動を検証するユニットテスト (xUnit)
-
----
-
-## 診断の設定
-
-PureSharp は Roslyn 標準の `.editorconfig` 機構を使用して、診断の重大度を設定します。`dotnet_diagnostic.<ID>.severity` 設定で、各診断をエラー、警告、または抑制として報告することができます。
-
-### サポートされている診断
-
-| 診断ID | カテゴリー | タイトル | 既定の重大度 |
+| Diagnostic ID | Category | 内容 | 既定 severity |
 |---|---|---|---|
-| **RT0001** | Purity | 静的可変フィールドへのアクセス | エラー |
-| **RT0002** | Purity | 非純粋メソッドの呼び出し | エラー |
-| **RT0003** | Purity | I/O操作 | エラー |
-| **LVP0001** | Purity | 不変ローカル変数への再代入 | エラー |
-| **LVP0002** | Purity | 不変ローカル変数の初期化忘れ | エラー |
-| **LVP0003** | Naming | 効果的に不変な変数の命名提案 | 警告 |
-| **FIF0001** | FluentIf | FluentIf チェーンの .Else() での終端忘れ | エラー |
+| **RT0001** | Purity | `[PureMethod]` から static mutable field へアクセス | Error |
+| **RT0002** | Purity | `[PureMethod]` から non-pure method を呼び出す | Error |
+| **RT0003** | Purity | `[PureMethod]` 内の I/O | Error |
+| **LVP0001** | Purity | 不変ローカル変数への再代入 | Error |
+| **LVP0002** | Purity | 不変ローカル変数の宣言時初期化忘れ | Error |
+| **LVP0003** | Naming | 実質不変なローカル変数への命名提案 | Warning |
+| **FIF0001** | FluentIf | FluentIf chain の `.Else(...)` 終端忘れ | Error |
 
-### 設定例
+DiagnosticのID・Category・既定severity・互換性ポリシーは [`docs/DIAGNOSTICS.md`](docs/DIAGNOSTICS.md) がSSOTです。7ルールすべての最小例は [`docs/RULE-EXAMPLES.md`](docs/RULE-EXAMPLES.md) にあります。
 
-プロジェクトのルートに `.editorconfig` を作成（または更新）します：
+## `.editorconfig`
 
 ```editorconfig
-# .editorconfig
-
 root = true
 
 [*.cs]
-# PureSharp の診断重大度を設定
-# 有効な値: none, silent, suggestion, warning, error
-
-# 参照透過性 (RT) - 既定: error
 dotnet_diagnostic.RT0001.severity = error
 dotnet_diagnostic.RT0002.severity = error
 dotnet_diagnostic.RT0003.severity = error
-
-# ローカル変数の不変性 (LVP) - 既定: error/warning
 dotnet_diagnostic.LVP0001.severity = error
 dotnet_diagnostic.LVP0002.severity = error
 dotnet_diagnostic.LVP0003.severity = warning
-
-# FluentIf (FIF) - 既定: error
 dotnet_diagnostic.FIF0001.severity = error
 ```
 
-### 重大度レベル
-
-- **error**: 診断が検出された場合ビルドが失敗します
-- **warning**: 警告が表示されますがビルドは成功します
-- **suggestion**: コード品質の軽微な提案（IDE内でハイライトされます）
-- **silent**: 診断が出力から抑制されますが分析は実行されます
-- **none**: 診断が完全に抑制されます
-
-### 例：診断を抑制する
+段階導入するときはID単位で変更します。
 
 ```editorconfig
 [*.cs]
-# LVP0003（命名提案）を抑制
 dotnet_diagnostic.LVP0003.severity = none
 ```
 
----
+## 0.x から 1.0 への移行
 
-## 開発の動機
-C# は非常に強力な言語ですが、大規模な開発や複雑なロジックにおいて、意図しない副作用や変数の再利用が原因でデバッグが困難になることがあります。PureSharp は、開発者に「制約」という名の「自由（バグからの解放）」を提供するために生まれました。
+[`docs/MIGRATION-1.0.md`](docs/MIGRATION-1.0.md) を参照してください。Diagnostic IDは7つともv1公開IDとして維持されますが、`ref`/`out`、deconstruction reassignment、FluentIf終端判定など、0.xより厳密になった境界があります。
 
----
+## 対応範囲と既知の制約
+
+PureSharp.Core / Analyzer は `netstandard2.0` を対象にします。C# / Roslyn / consumer TFM / performance gate の方針は [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md) にあります。
+
+RT Analyzer が何も報告しなかった場合も、それは「v1で保証する検出範囲に違反が見つからなかった」ことを意味し、形式的に完全な参照透過性を証明したことを意味しません。
+
+## ドキュメント
+
+- [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) — clean consumer Quick Start
+- [`docs/DIAGNOSTICS.md`](docs/DIAGNOSTICS.md) — Diagnostic SSOT / 互換性方針
+- [`docs/RULE-EXAMPLES.md`](docs/RULE-EXAMPLES.md) — 全7 Diagnostic の例
+- [`docs/PURITY-SEMANTICS.md`](docs/PURITY-SEMANTICS.md) — purity semantics / known limitations
+- [`docs/CALL-CONTRACT.md`](docs/CALL-CONTRACT.md) — `[PureMethod]` call contract
+- [`docs/LVP.md`](docs/LVP.md) — 不変ローカル変数
+- [`docs/FLUENT_IF.md`](docs/FLUENT_IF.md) — FluentIf仕様
+- [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md) — 対応バージョン / performance
+- [`docs/MIGRATION-1.0.md`](docs/MIGRATION-1.0.md) — 0.x→1.0 migration
+- [`docs/DOCUMENTATION.md`](docs/DOCUMENTATION.md) — README / 翻訳のSSOT方針
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — contribution guide
+
+## README翻訳について
+
+挙動契約は英語README単独ではなく、`docs/DIAGNOSTICS.md` と各専門contract documentを正本とします。日本語を含む翻訳READMEは利用者向け説明であり、矛盾した場合はcontract documentが優先されます。詳細は [`docs/DOCUMENTATION.md`](docs/DOCUMENTATION.md) を参照してください。
+
 ## ライセンス
-このプロジェクトは MIT ライセンスの下で公開されています。
+
+MIT License です。
