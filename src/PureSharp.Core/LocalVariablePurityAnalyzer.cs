@@ -45,6 +45,7 @@ public class LocalVariablePurityAnalyzer : DiagnosticAnalyzer
 
         context.RegisterOperationAction(AnalyzeVariableDeclarator, OperationKind.VariableDeclarator);
         context.RegisterOperationAction(AnalyzeSimpleAssignment, OperationKind.SimpleAssignment);
+        context.RegisterOperationAction(AnalyzeDeconstructionAssignment, OperationKind.DeconstructionAssignment);
         context.RegisterOperationAction(AnalyzeCompoundAssignment, OperationKind.CompoundAssignment);
         context.RegisterOperationAction(AnalyzeIncrement, OperationKind.Increment);
         context.RegisterOperationAction(AnalyzeDecrement, OperationKind.Decrement);
@@ -54,6 +55,12 @@ public class LocalVariablePurityAnalyzer : DiagnosticAnalyzer
     private static void AnalyzeVariableDeclarator(OperationAnalysisContext context)
     {
         var op = (IVariableDeclaratorOperation)context.Operation;
+
+        // foreach locals are initialized by the iteration protocol rather than by a
+        // declarator initializer, so they must not trigger LVP0002.
+        if (HasAncestor<IForEachLoopOperation>(op))
+            return;
+
         if (PurityRulesEngine.IsMissingInitializer(op))
         {
             context.ReportDiagnostic(Diagnostic.Create(
@@ -66,6 +73,12 @@ public class LocalVariablePurityAnalyzer : DiagnosticAnalyzer
     private static void AnalyzeSimpleAssignment(OperationAnalysisContext context)
     {
         ReportIfReassignment(context, context.Operation);
+    }
+
+    private static void AnalyzeDeconstructionAssignment(OperationAnalysisContext context)
+    {
+        var assignment = (IDeconstructionAssignmentOperation)context.Operation;
+        ReportPureLocalsInTarget(context, assignment.Target);
     }
 
     private static void AnalyzeCompoundAssignment(OperationAnalysisContext context)
@@ -116,5 +129,32 @@ public class LocalVariablePurityAnalyzer : DiagnosticAnalyzer
                 op.Syntax.GetLocation(),
                 localName));
         }
+    }
+
+    private static void ReportPureLocalsInTarget(OperationAnalysisContext context, IOperation target)
+    {
+        foreach (var operation in target.DescendantsAndSelf())
+        {
+            if (operation is ILocalReferenceOperation localReference &&
+                PurityRulesEngine.IsPureLocalVariable(localReference.Local))
+            {
+                context.ReportDiagnostic(Diagnostic.Create(
+                    LVP0001,
+                    localReference.Syntax.GetLocation(),
+                    localReference.Local.Name));
+            }
+        }
+    }
+
+    private static bool HasAncestor<TOperation>(IOperation operation)
+        where TOperation : class, IOperation
+    {
+        for (var parent = operation.Parent; parent is not null; parent = parent.Parent)
+        {
+            if (parent is TOperation)
+                return true;
+        }
+
+        return false;
     }
 }
