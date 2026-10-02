@@ -37,6 +37,7 @@ Achieves immutability using a naming convention that starts with an underscore (
 
 #### FluentIf Termination Check (FIFxxxx)
 *   Verifies that chains starting with `Fluent.If` are correctly terminated with `.Else()`. Failure to terminate will result in a compile error.
+*   Nested chains, lambdas, generic type inference, runtime branch evaluation, and exception behavior are part of the v1 contract documented in [`docs/FLUENT_IF.md`](docs/FLUENT_IF.md).
 
 ---
 
