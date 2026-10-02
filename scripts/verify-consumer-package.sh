@@ -3,6 +3,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 package_dir="${1:-$repo_root/out}"
+package_dir="$(cd "$package_dir" && pwd)"
 
 shopt -s nullglob
 packages=("$package_dir"/loach.PureSharp.*.nupkg)
