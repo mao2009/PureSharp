@@ -89,6 +89,20 @@ public class Test
     }
 
     [Fact]
+    public async Task ResultConsumedAfterElse_NoDiagnostic()
+    {
+        var testCode = @"
+using System;
+using PureSharp.Core;
+public class Test
+{
+    public string Run() => Fluent.If(true, () => 1).Else(0).ToString();
+}
+" + FluentApiSource;
+        await VerifyCS.VerifyAnalyzerAsync(testCode);
+    }
+
+    [Fact]
     public async Task ConditionResult_ElseIfChainEndsWithElse_NoDiagnostic()
     {
         var testCode = @"
