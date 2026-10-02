@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using Microsoft.CodeAnalysis.Testing;
 using Xunit;
 using VerifyCS = Microsoft.CodeAnalysis.CSharp.Testing.XUnit.AnalyzerVerifier<
     PureSharp.Analyzers.FluentIfAnalyzer>;
@@ -8,8 +7,6 @@ namespace PureSharp.Analyzers.Tests;
 
 public class FluentIfAnalyzerTests
 {
-    // FluentIf API の定義を各テストのソースに追記します。
-    // using 句は使わず、完全修飾名を使用することで testCode への追記時に CS1529 を回避する
     private const string FluentApiSource = @"
 namespace PureSharp.Core
 {
@@ -63,21 +60,15 @@ namespace PureSharp.Core
 }
 ";
 
-    // =========================================================
-    // 正常系: エラーが出ないケース
-    // =========================================================
-
     [Fact]
     public async Task ConditionResult_ChainEndsWithElseFunc_NoDiagnostic()
     {
         var testCode = @"
 using System;
 using PureSharp.Core;
-
 public class Test
 {
-    public int Run() =>
-        Fluent.If(true, () => 1).Else(() => 0);
+    public int Run() => Fluent.If(true, () => 1).Else(() => 0);
 }
 " + FluentApiSource;
         await VerifyCS.VerifyAnalyzerAsync(testCode);
@@ -89,11 +80,23 @@ public class Test
         var testCode = @"
 using System;
 using PureSharp.Core;
-
 public class Test
 {
-    public int Run() =>
-        Fluent.If(true, () => 1).Else(0);
+    public int Run() => Fluent.If(true, () => 1).Else(0);
+}
+" + FluentApiSource;
+        await VerifyCS.VerifyAnalyzerAsync(testCode);
+    }
+
+    [Fact]
+    public async Task ResultConsumedAfterElse_NoDiagnostic()
+    {
+        var testCode = @"
+using System;
+using PureSharp.Core;
+public class Test
+{
+    public string Run() => Fluent.If(true, () => 1).Else(0).ToString();
 }
 " + FluentApiSource;
         await VerifyCS.VerifyAnalyzerAsync(testCode);
@@ -105,7 +108,6 @@ public class Test
         var testCode = @"
 using System;
 using PureSharp.Core;
-
 public class Test
 {
     public int Run() =>
@@ -123,11 +125,9 @@ public class Test
         var testCode = @"
 using System;
 using PureSharp.Core;
-
 public class Test
 {
-    public void Run() =>
-        Fluent.If(true, () => { }).Else(() => { });
+    public void Run() => Fluent.If(true, () => { }).Else(() => { });
 }
 " + FluentApiSource;
         await VerifyCS.VerifyAnalyzerAsync(testCode);
@@ -139,7 +139,6 @@ public class Test
         var testCode = @"
 using System;
 using PureSharp.Core;
-
 public class Test
 {
     public void Run() =>
@@ -151,9 +150,49 @@ public class Test
         await VerifyCS.VerifyAnalyzerAsync(testCode);
     }
 
-    // =========================================================
-    // 異常系: FIF0001 が報告されるべきケース
-    // =========================================================
+    [Fact]
+    public async Task ParenthesizedChain_EndsWithElse_NoDiagnostic()
+    {
+        var testCode = @"
+using System;
+using PureSharp.Core;
+public class Test
+{
+    public int Run() => ((Fluent.If(false, () => 1))).Else(2);
+}
+" + FluentApiSource;
+        await VerifyCS.VerifyAnalyzerAsync(testCode);
+    }
+
+    [Fact]
+    public async Task NestedChains_BothTerminate_NoDiagnostic()
+    {
+        var testCode = @"
+using System;
+using PureSharp.Core;
+public class Test
+{
+    public int Run() =>
+        Fluent.If(true, () => Fluent.If(false, () => 1).Else(2))
+              .Else(0);
+}
+" + FluentApiSource;
+        await VerifyCS.VerifyAnalyzerAsync(testCode);
+    }
+
+    [Fact]
+    public async Task GenericInference_ExplicitTypeArgument_NoDiagnostic()
+    {
+        var testCode = @"
+using System;
+using PureSharp.Core;
+public class Test
+{
+    public string Run() => Fluent.If<string>(true, () => ""yes"").Else(""no"");
+}
+" + FluentApiSource;
+        await VerifyCS.VerifyAnalyzerAsync(testCode);
+    }
 
     [Fact]
     public async Task ConditionResult_IfOnly_ReportsDiagnostic()
@@ -161,7 +200,6 @@ public class Test
         var testCode = @"
 using System;
 using PureSharp.Core;
-
 public class Test
 {
     public void Run()
@@ -179,7 +217,6 @@ public class Test
         var testCode = @"
 using System;
 using PureSharp.Core;
-
 public class Test
 {
     public void Run()
@@ -197,7 +234,6 @@ public class Test
         var testCode = @"
 using System;
 using PureSharp.Core;
-
 public class Test
 {
     public void Run()
@@ -215,7 +251,6 @@ public class Test
         var testCode = @"
 using System;
 using PureSharp.Core;
-
 public class Test
 {
     public void Run()
@@ -233,13 +268,43 @@ public class Test
         var testCode = @"
 using System;
 using PureSharp.Core;
-
 public class Test
 {
     public void Run()
     {
         var chain = {|FIF0001:Fluent.If(true, () => 1)|};
     }
+}
+" + FluentApiSource;
+        await VerifyCS.VerifyAnalyzerAsync(testCode);
+    }
+
+    [Fact]
+    public async Task UnrelatedTerminalMethod_DoesNotCountAsElse_ReportsDiagnostic()
+    {
+        var testCode = @"
+using System;
+using PureSharp.Core;
+public class Test
+{
+    public void Run()
+    {
+        _ = {|FIF0001:Fluent.If(true, () => 1).ToString()|};
+    }
+}
+" + FluentApiSource;
+        await VerifyCS.VerifyAnalyzerAsync(testCode);
+    }
+
+    [Fact]
+    public async Task LambdaContainingIncompleteChain_ReportsDiagnostic()
+    {
+        var testCode = @"
+using System;
+using PureSharp.Core;
+public class Test
+{
+    public Func<object> Make() => () => {|FIF0001:Fluent.If(true, () => 1)|};
 }
 " + FluentApiSource;
         await VerifyCS.VerifyAnalyzerAsync(testCode);
