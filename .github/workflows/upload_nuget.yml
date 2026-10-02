@@ -33,6 +33,47 @@ jobs:
           path: out/*.nupkg
           if-no-files-found: error
 
+  request-release-tag:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create explicitly requested release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          request_file="release/requested-version.txt"
+          if [[ ! -f "$request_file" ]]; then
+            echo "No release request marker; nothing to tag."
+            exit 0
+          fi
+
+          requested="$(tr -d '[:space:]' < "$request_file")"
+          version="$(sed -n 's:.*<Version>\([^<]*\)</Version>.*:\1:p' Directory.Build.props | head -n1)"
+          if [[ -z "$requested" || "$requested" != "$version" ]]; then
+            echo "Release request/version mismatch: request=$requested SSOT=$version" >&2
+            exit 1
+          fi
+
+          tag="v${version}"
+          if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
+            echo "$tag already exists; no new tag created."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "$tag" "$GITHUB_SHA"
+          git push origin "refs/tags/$tag"
+          echo "Created $tag at $GITHUB_SHA after the main release gate passed."
+
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: build-test
