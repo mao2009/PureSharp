@@ -25,15 +25,14 @@ jobs:
       - name: Verify release pipeline
         run: bash scripts/verify-release.sh
 
-      - name: Upload release package
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Upload verified package
         uses: actions/upload-artifact@v4
         with:
           name: release-package
           path: out/*.nupkg
           if-no-files-found: error
 
-  request-release-tag:
+  publish-requested-release:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build-test
     runs-on: ubuntu-latest
@@ -45,13 +44,28 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Create explicitly requested release tag
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.103'
+
+      - name: Download verified package
+        uses: actions/download-artifact@v4
+        with:
+          name: release-package
+          path: out
+
+      - name: Resolve explicit release request
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
           request_file="release/requested-version.txt"
           if [[ ! -f "$request_file" ]]; then
-            echo "No release request marker; nothing to tag."
+            echo "requested=false" >> "$GITHUB_OUTPUT"
+            echo "No release request marker; nothing to publish."
             exit 0
           fi
 
@@ -63,18 +77,91 @@ jobs:
           fi
 
           tag="v${version}"
-          if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
-            echo "$tag already exists; no new tag created."
-            exit 0
+          if gh release view "$tag" >/dev/null 2>&1; then
+            is_draft="$(gh release view "$tag" --json isDraft --jq '.isDraft')"
+            if [[ "$is_draft" != "true" ]]; then
+              echo "requested=false" >> "$GITHUB_OUTPUT"
+              echo "$tag is already published; nothing to do."
+              exit 0
+            fi
           fi
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag "$tag" "$GITHUB_SHA"
-          git push origin "refs/tags/$tag"
-          echo "Created $tag at $GITHUB_SHA after the main release gate passed."
+          echo "requested=true" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
-  publish:
+      - name: Verify package and create draft release tag
+        if: steps.release.outputs.requested == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.release.outputs.version }}
+          TAG: ${{ steps.release.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          package="out/loach.PureSharp.${VERSION}.nupkg"
+          if [[ ! -f "$package" ]]; then
+            echo "Expected package not found: $package" >&2
+            exit 1
+          fi
+
+          nuspec_version="$(unzip -p "$package" '*.nuspec' | sed -n 's:.*<version>\([^<]*\)</version>.*:\1:p' | head -n1)"
+          if [[ "$nuspec_version" != "$VERSION" ]]; then
+            echo "Package/version mismatch: package=$nuspec_version SSOT=$VERSION" >&2
+            exit 1
+          fi
+
+          tag_exists=false
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
+            tag_exists=true
+            git fetch origin "refs/tags/${TAG}:refs/tags/${TAG}"
+            tag_target="$(git rev-list -n 1 "$TAG")"
+            if [[ "$tag_target" != "$GITHUB_SHA" ]]; then
+              echo "Existing immutable tag $TAG points to $tag_target, not release commit $GITHUB_SHA." >&2
+              exit 1
+            fi
+          fi
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$package" --clobber
+          elif [[ "$tag_exists" == true ]]; then
+            args=(release create "$TAG" "$package" --verify-tag --generate-notes --draft --title "PureSharp $TAG")
+            if [[ "$TAG" == *-* ]]; then
+              args+=(--prerelease)
+            fi
+            gh "${args[@]}"
+          else
+            args=(release create "$TAG" "$package" --target "$GITHUB_SHA" --generate-notes --draft --title "PureSharp $TAG")
+            if [[ "$TAG" == *-* ]]; then
+              args+=(--prerelease)
+            fi
+            gh "${args[@]}"
+          fi
+
+          git fetch --force origin "refs/tags/${TAG}:refs/tags/${TAG}"
+          tag_target="$(git rev-list -n 1 "$TAG")"
+          if [[ "$tag_target" != "$GITHUB_SHA" ]]; then
+            echo "Release tag $TAG points to $tag_target, not release commit $GITHUB_SHA." >&2
+            exit 1
+          fi
+
+      - name: Push NuGet package
+        if: steps.release.outputs.requested == 'true'
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        run: dotnet nuget push "out/loach.PureSharp.${VERSION}.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Verify published package from NuGet.org
+        if: steps.release.outputs.requested == 'true'
+        run: bash scripts/verify-published-package.sh "${{ steps.release.outputs.version }}"
+
+      - name: Publish GitHub Release
+        if: steps.release.outputs.requested == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "${{ steps.release.outputs.tag }}" --draft=false
+
+  publish-tag:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: build-test
     runs-on: ubuntu-latest
