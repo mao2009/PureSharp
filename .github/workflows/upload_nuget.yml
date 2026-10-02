@@ -77,20 +77,18 @@ jobs:
           fi
 
           tag="v${version}"
-          if gh release view "$tag" >/dev/null 2>&1; then
-            is_draft="$(gh release view "$tag" --json isDraft --jq '.isDraft')"
-            if [[ "$is_draft" != "true" ]]; then
-              echo "requested=false" >> "$GITHUB_OUTPUT"
-              echo "$tag is already published; nothing to do."
-              exit 0
-            fi
+          published_id="$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" --jq ".[] | select(.tag_name == \"${tag}\" and .draft == false) | .id" | head -n1)"
+          if [[ -n "$published_id" ]]; then
+            echo "requested=false" >> "$GITHUB_OUTPUT"
+            echo "$tag is already published; nothing to do."
+            exit 0
           fi
 
           echo "requested=true" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
-      - name: Verify package and create draft release tag
+      - name: Verify package, tag release commit, and create draft release
         if: steps.release.outputs.requested == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -111,31 +109,27 @@ jobs:
             exit 1
           fi
 
-          tag_exists=false
+          # Draft releases are intentionally disposable. A previous failed attempt may have
+          # created an untagged draft; remove any draft for this version before retrying.
+          while IFS= read -r draft_id; do
+            [[ -z "$draft_id" ]] && continue
+            gh api --method DELETE "repos/${GITHUB_REPOSITORY}/releases/${draft_id}"
+            echo "Removed stale draft release ${draft_id} for $TAG."
+          done < <(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" --jq ".[] | select(.tag_name == \"${TAG}\" and .draft == true) | .id")
+
           if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
-            tag_exists=true
-            git fetch origin "refs/tags/${TAG}:refs/tags/${TAG}"
+            git fetch --force origin "refs/tags/${TAG}:refs/tags/${TAG}"
             tag_target="$(git rev-list -n 1 "$TAG")"
             if [[ "$tag_target" != "$GITHUB_SHA" ]]; then
               echo "Existing immutable tag $TAG points to $tag_target, not release commit $GITHUB_SHA." >&2
               exit 1
             fi
-          fi
-
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" "$package" --clobber
-          elif [[ "$tag_exists" == true ]]; then
-            args=(release create "$TAG" "$package" --verify-tag --generate-notes --draft --title "PureSharp $TAG")
-            if [[ "$TAG" == *-* ]]; then
-              args+=(--prerelease)
-            fi
-            gh "${args[@]}"
           else
-            args=(release create "$TAG" "$package" --target "$GITHUB_SHA" --generate-notes --draft --title "PureSharp $TAG")
-            if [[ "$TAG" == *-* ]]; then
-              args+=(--prerelease)
-            fi
-            gh "${args[@]}"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag "$TAG" "$GITHUB_SHA"
+            git push origin "refs/tags/${TAG}"
+            echo "Created $TAG at $GITHUB_SHA after the release gate passed."
           fi
 
           git fetch --force origin "refs/tags/${TAG}:refs/tags/${TAG}"
@@ -144,6 +138,12 @@ jobs:
             echo "Release tag $TAG points to $tag_target, not release commit $GITHUB_SHA." >&2
             exit 1
           fi
+
+          args=(release create "$TAG" "$package" --verify-tag --generate-notes --draft --title "PureSharp $TAG")
+          if [[ "$TAG" == *-* ]]; then
+            args+=(--prerelease)
+          fi
+          gh "${args[@]}"
 
       - name: Push NuGet package
         if: steps.release.outputs.requested == 'true'
