@@ -15,10 +15,10 @@ The release CI validates a clean `net10.0` consumer. See [`COMPATIBILITY.md`](CO
 ```bash
 dotnet new console -n PureSharpDemo -f net10.0
 cd PureSharpDemo
-dotnet add package loach.PureSharp
+dotnet add package loach.PureSharp --version 1.0.0
 ```
 
-For reproducible production builds, pin the package version in the generated project file rather than relying on the latest version.
+Pinning `1.0.0` makes this v1 Definition-of-Done path reproducible even after newer PureSharp releases exist.
 
 ## 2. Replace `Program.cs`
 
