@@ -5,16 +5,6 @@
 Rule ID | Category | Severity | Notes
 --------|----------|----------|------
 
-### Changed Rules
-
-Rule ID | New Category | New Severity | Old Category | Old Severity | Notes
---------|--------------|--------------|--------------|--------------|------
-
-### Removed Rules
-
-Rule ID | New Category | New Severity | Old Category | Old Severity | Notes
---------|--------------|--------------|--------------|--------------|------
-
 ## Release 0.1.3
 
 ### New Rules
@@ -28,13 +18,3 @@ LVP0003 | Naming | Warning | Suggestion to apply naming convention for immutable
 RT0001 | Purity | Error | Static field access in [PureMethod]
 RT0002 | Purity | Error | Non-pure method call in [PureMethod]
 RT0003 | Purity | Error | I/O operation in [PureMethod]
-
-### Changed Rules
-
-Rule ID | New Category | New Severity | Old Category | Old Severity | Notes
---------|--------------|--------------|--------------|--------------|------
-
-### Removed Rules
-
-Rule ID | New Category | New Severity | Old Category | Old Severity | Notes
---------|--------------|--------------|--------------|--------------|------
