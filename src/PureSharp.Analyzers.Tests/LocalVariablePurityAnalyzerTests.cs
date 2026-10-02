@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using Microsoft.CodeAnalysis.Testing;
 using Xunit;
 using VerifyCS = Microsoft.CodeAnalysis.CSharp.Testing.XUnit.AnalyzerVerifier<
     PureSharp.Analyzers.LocalVariablePurityAnalyzer>;
@@ -8,10 +7,6 @@ namespace PureSharp.Analyzers.Tests;
 
 public class LocalVariablePurityAnalyzerTests
 {
-    // =========================================================
-    // 正常系: エラーが出ないケース
-    // =========================================================
-
     [Fact]
     public async Task Initialized_UnderscoreVariable_NoDiagnostic()
     {
@@ -93,9 +88,36 @@ public class Test
         await VerifyCS.VerifyAnalyzerAsync(testCode);
     }
 
-    // =========================================================
-    // 異常系: LVP0001 - 再代入禁止
-    // =========================================================
+    [Fact]
+    public async Task ForeachUnderscoreVariable_ImplicitInitialization_NoDiagnostic()
+    {
+        var testCode = @"
+public class Test
+{
+    public void Method(int[] values)
+    {
+        foreach (var _value in values)
+            System.Console.WriteLine(_value);
+    }
+}";
+        await VerifyCS.VerifyAnalyzerAsync(testCode);
+    }
+
+    [Fact]
+    public async Task PatternVariable_IsNotDeclarationTimeImmutableLocal_NoDiagnostic()
+    {
+        var testCode = @"
+public class Test
+{
+    public int Method(object value)
+    {
+        if (value is int _number)
+            return _number;
+        return 0;
+    }
+}";
+        await VerifyCS.VerifyAnalyzerAsync(testCode);
+    }
 
     [Fact]
     public async Task UnderscoreVariable_SimpleAssignment_ReportsError()
@@ -176,9 +198,53 @@ public class Test
         await VerifyCS.VerifyAnalyzerAsync(testCode);
     }
 
-    // =========================================================
-    // 異常系: LVP0002 - 宣言時初期化強制
-    // =========================================================
+    [Fact]
+    public async Task UnderscoreVariable_DeconstructionAssignment_ReportsError()
+    {
+        var testCode = @"
+public class Test
+{
+    public void Method()
+    {
+        int _x = 1;
+        int y = 2;
+        ({|LVP0001:_x|}, y) = (3, 4);
+    }
+}";
+        await VerifyCS.VerifyAnalyzerAsync(testCode);
+    }
+
+    [Fact]
+    public async Task CapturedUnderscoreVariable_ReassignedInLambda_ReportsError()
+    {
+        var testCode = @"
+public class Test
+{
+    public void Method()
+    {
+        int _x = 1;
+        System.Action action = () => {|LVP0001:_x = 2|};
+        action();
+    }
+}";
+        await VerifyCS.VerifyAnalyzerAsync(testCode);
+    }
+
+    [Fact]
+    public async Task CapturedUnderscoreVariable_ReassignedInLocalFunction_ReportsError()
+    {
+        var testCode = @"
+public class Test
+{
+    public void Method()
+    {
+        int _x = 1;
+        void Mutate() => {|LVP0001:_x = 2|};
+        Mutate();
+    }
+}";
+        await VerifyCS.VerifyAnalyzerAsync(testCode);
+    }
 
     [Fact]
     public async Task UnderscoreVariable_NoInitializer_ReportsError()
