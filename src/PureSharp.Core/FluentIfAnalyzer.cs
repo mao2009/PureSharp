@@ -70,62 +70,69 @@ public class FluentIfAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        var terminalInvocation = FindTerminalInvocation(invocation);
-
-        // A bare Fluent.If(...) is a valid C# expression but an incomplete FluentIf chain.
-        if (ReferenceEquals(terminalInvocation, invocation))
-        {
-            ctx.ReportDiagnostic(Diagnostic.Create(FIF0001, invocation.GetLocation()));
-            return;
-        }
-
-        var terminalMethod = ctx.SemanticModel
-            .GetSymbolInfo(terminalInvocation, ctx.CancellationToken)
-            .Symbol as IMethodSymbol;
-
-        // If the outer invocation itself cannot be bound, the compiler already owns the error.
-        // Avoid adding a misleading FIF0001 while the user is typing an invalid/partial chain.
-        if (terminalMethod is null)
-            return;
-
-        if (terminalMethod.Name == "Else" &&
-            IsConditionType(terminalMethod.ContainingType, conditionResultType, conditionActionType))
-        {
-            return;
-        }
-
-        // The chain continued, but did not terminate in the FluentIf Else API. This catches
-        // cases such as Fluent.If(...).ToString() that the old return-type-based check missed.
-        ctx.ReportDiagnostic(Diagnostic.Create(FIF0001, terminalInvocation.GetLocation()));
-    }
-
-    private static InvocationExpressionSyntax FindTerminalInvocation(InvocationExpressionSyntax start)
-    {
-        ExpressionSyntax current = start;
-        var terminal = start;
+        ExpressionSyntax current = invocation;
+        var lastFluentInvocation = invocation;
 
         while (true)
         {
-            // Parentheses must not break chain recognition:
-            // ((Fluent.If(...))).Else(...)
-            if (current.Parent is ParenthesizedExpressionSyntax parenthesized)
+            var nextInvocation = FindNextInvocation(current);
+            if (nextInvocation is null)
             {
-                current = parenthesized;
-                continue;
+                // The Fluent.If chain ended without reaching Else. A bare Fluent.If(...) and an
+                // ElseIf-only chain are both valid C# expressions, so FIF0001 owns this error.
+                ctx.ReportDiagnostic(Diagnostic.Create(FIF0001, lastFluentInvocation.GetLocation()));
+                return;
             }
 
-            if (current.Parent is MemberAccessExpressionSyntax memberAccess &&
-                ReferenceEquals(memberAccess.Expression, current) &&
-                memberAccess.Parent is InvocationExpressionSyntax nextInvocation &&
-                ReferenceEquals(nextInvocation.Expression, memberAccess))
+            var nextMethod = ctx.SemanticModel
+                .GetSymbolInfo(nextInvocation, ctx.CancellationToken)
+                .Symbol as IMethodSymbol;
+
+            // If the chained invocation cannot be bound, the compiler already owns the error.
+            // Avoid adding a misleading FIF0001 while the user is typing invalid/partial code.
+            if (nextMethod is null)
+                return;
+
+            if (nextMethod.Name == "Else" &&
+                IsConditionType(nextMethod.ContainingType, conditionResultType, conditionActionType))
             {
-                terminal = nextInvocation;
-                current = nextInvocation;
-                continue;
+                // The FluentIf chain is complete at Else. Anything after the Else result belongs
+                // to the caller's ordinary expression chain and must not be treated as FluentIf.
+                return;
             }
 
-            return terminal;
+            if (!IsConditionType(nextMethod.ContainingType, conditionResultType, conditionActionType))
+            {
+                // An unrelated method was invoked on the intermediate condition object before
+                // Else, e.g. Fluent.If(...).ToString(). That consumes the chain without its
+                // required terminator.
+                ctx.ReportDiagnostic(Diagnostic.Create(FIF0001, nextInvocation.GetLocation()));
+                return;
+            }
+
+            lastFluentInvocation = nextInvocation;
+            current = nextInvocation;
         }
+    }
+
+    private static InvocationExpressionSyntax? FindNextInvocation(ExpressionSyntax current)
+    {
+        ExpressionSyntax expression = current;
+
+        // Parentheses must not break chain recognition:
+        // ((Fluent.If(...))).Else(...)
+        while (expression.Parent is ParenthesizedExpressionSyntax parenthesized)
+            expression = parenthesized;
+
+        if (expression.Parent is MemberAccessExpressionSyntax memberAccess &&
+            ReferenceEquals(memberAccess.Expression, expression) &&
+            memberAccess.Parent is InvocationExpressionSyntax nextInvocation &&
+            ReferenceEquals(nextInvocation.Expression, memberAccess))
+        {
+            return nextInvocation;
+        }
+
+        return null;
     }
 
     private static bool IsConditionType(
