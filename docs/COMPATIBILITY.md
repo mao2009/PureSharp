@@ -60,8 +60,8 @@ PureSharp analyzer performance sample: package=<version> sources=250 elapsed_ms=
 
 For v1 release preparation, record the latest successful main/RC measurement here and compare subsequent release candidates against it.
 
-- Initial v1 baseline: **pending first successful performance-gate CI run**
-- Baseline environment: GitHub-hosted Ubuntu, .NET SDK 10.0.103, Release build, 250 generated source files
+- Initial v1 baseline: **823 ms** (PR #28, CI run #46, package 0.1.6, 250 sources)
+- Baseline environment: GitHub-hosted Ubuntu 24.04, .NET SDK 10.0.103, Release build, 250 generated source files
 
 ## Regression policy
 
