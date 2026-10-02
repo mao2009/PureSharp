@@ -36,40 +36,110 @@ public class FluentIfAnalyzer : DiagnosticAnalyzer
 
         context.RegisterCompilationStartAction(compilationContext =>
         {
+            var fluentType = compilationContext.Compilation
+                .GetTypeByMetadataName("PureSharp.Core.Fluent");
             var conditionResultType = compilationContext.Compilation
                 .GetTypeByMetadataName("PureSharp.Core.ConditionResult`1");
             var conditionActionType = compilationContext.Compilation
                 .GetTypeByMetadataName("PureSharp.Core.ConditionAction");
 
-            if (conditionResultType is null && conditionActionType is null) return;
+            if (fluentType is null || (conditionResultType is null && conditionActionType is null))
+                return;
 
             compilationContext.RegisterSyntaxNodeAction(
-                ctx => CheckInvocation(ctx, conditionResultType, conditionActionType),
+                ctx => CheckInvocation(ctx, fluentType, conditionResultType, conditionActionType),
                 SyntaxKind.InvocationExpression);
         });
     }
 
     private static void CheckInvocation(
         SyntaxNodeAnalysisContext ctx,
+        INamedTypeSymbol fluentType,
         INamedTypeSymbol? conditionResultType,
         INamedTypeSymbol? conditionActionType)
     {
         var invocation = (InvocationExpressionSyntax)ctx.Node;
+        var method = ctx.SemanticModel.GetSymbolInfo(invocation, ctx.CancellationToken).Symbol as IMethodSymbol;
 
-        var typeInfo = ctx.SemanticModel.GetTypeInfo(invocation, ctx.CancellationToken);
-        if (typeInfo.Type is not INamedTypeSymbol namedType) return;
+        // Analyze only an actual PureSharp.Core.Fluent.If entry point. This avoids reporting on
+        // arbitrary expressions whose return type merely happens to be ConditionResult<T>.
+        if (method is null ||
+            method.Name != "If" ||
+            !SymbolEqualityComparer.Default.Equals(method.ContainingType, fluentType))
+        {
+            return;
+        }
 
-        var isConditionResult = conditionResultType is not null &&
-            SymbolEqualityComparer.Default.Equals(namedType.OriginalDefinition, conditionResultType);
+        var terminalInvocation = FindTerminalInvocation(invocation);
 
-        var isConditionAction = conditionActionType is not null &&
-            SymbolEqualityComparer.Default.Equals(namedType.OriginalDefinition, conditionActionType);
+        // A bare Fluent.If(...) is a valid C# expression but an incomplete FluentIf chain.
+        if (ReferenceEquals(terminalInvocation, invocation))
+        {
+            ctx.ReportDiagnostic(Diagnostic.Create(FIF0001, invocation.GetLocation()));
+            return;
+        }
 
-        if (!isConditionResult && !isConditionAction) return;
+        var terminalMethod = ctx.SemanticModel
+            .GetSymbolInfo(terminalInvocation, ctx.CancellationToken)
+            .Symbol as IMethodSymbol;
 
-        // 親ノードが MemberAccessExpression であれば、このチェーンはさらに続いている (非終端)
-        if (invocation.Parent is MemberAccessExpressionSyntax) return;
+        // If the outer invocation itself cannot be bound, the compiler already owns the error.
+        // Avoid adding a misleading FIF0001 while the user is typing an invalid/partial chain.
+        if (terminalMethod is null)
+            return;
 
-        ctx.ReportDiagnostic(Diagnostic.Create(FIF0001, invocation.GetLocation()));
+        if (terminalMethod.Name == "Else" &&
+            IsConditionType(terminalMethod.ContainingType, conditionResultType, conditionActionType))
+        {
+            return;
+        }
+
+        // The chain continued, but did not terminate in the FluentIf Else API. This catches
+        // cases such as Fluent.If(...).ToString() that the old return-type-based check missed.
+        ctx.ReportDiagnostic(Diagnostic.Create(FIF0001, terminalInvocation.GetLocation()));
+    }
+
+    private static InvocationExpressionSyntax FindTerminalInvocation(InvocationExpressionSyntax start)
+    {
+        ExpressionSyntax current = start;
+        var terminal = start;
+
+        while (true)
+        {
+            // Parentheses must not break chain recognition:
+            // ((Fluent.If(...))).Else(...)
+            if (current.Parent is ParenthesizedExpressionSyntax parenthesized)
+            {
+                current = parenthesized;
+                continue;
+            }
+
+            if (current.Parent is MemberAccessExpressionSyntax memberAccess &&
+                ReferenceEquals(memberAccess.Expression, current) &&
+                memberAccess.Parent is InvocationExpressionSyntax nextInvocation &&
+                ReferenceEquals(nextInvocation.Expression, memberAccess))
+            {
+                terminal = nextInvocation;
+                current = nextInvocation;
+                continue;
+            }
+
+            return terminal;
+        }
+    }
+
+    private static bool IsConditionType(
+        INamedTypeSymbol containingType,
+        INamedTypeSymbol? conditionResultType,
+        INamedTypeSymbol? conditionActionType)
+    {
+        if (conditionResultType is not null &&
+            SymbolEqualityComparer.Default.Equals(containingType.OriginalDefinition, conditionResultType))
+        {
+            return true;
+        }
+
+        return conditionActionType is not null &&
+            SymbolEqualityComparer.Default.Equals(containingType.OriginalDefinition, conditionActionType);
     }
 }
