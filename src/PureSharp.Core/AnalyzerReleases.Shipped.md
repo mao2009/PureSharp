@@ -1,16 +1,9 @@
-## Release 0.1.4
-
-### New Rules
-
-Rule ID | Category | Severity | Notes
---------|----------|----------|------
-
 ## Release 0.1.3
 
 ### New Rules
 
 Rule ID | Category | Severity | Notes
---------|----------|----------|------
+--------|----------|----------|--------------------
 FIF0001 | FluentIf | Error | FluentIf chain termination check
 LVP0001 | Purity | Error | Reassignment to immutable local variable prohibited
 LVP0002 | Purity | Error | Mandatory initialization of immutable local variable
