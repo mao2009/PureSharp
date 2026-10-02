@@ -9,7 +9,7 @@
 ## Install
 
 ```bash
-dotnet add package loach.PureSharp
+dotnet add package loach.PureSharp --version 1.0.0
 ```
 
 The package contains both `PureSharp.Core` and the analyzer assembly. No PureSharp-specific configuration file is required; diagnostics use standard Roslyn `.editorconfig` settings.
