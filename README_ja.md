@@ -9,7 +9,7 @@
 ## インストール
 
 ```bash
-dotnet add package loach.PureSharp
+dotnet add package loach.PureSharp --version 1.0.0
 ```
 
 1つのパッケージに `PureSharp.Core` と Analyzer が含まれます。独自設定ファイルは使わず、Roslyn標準の `.editorconfig` で Diagnostic 単位に設定します。
