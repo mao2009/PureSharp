@@ -76,6 +76,23 @@ public class Test
         await VerifyCS.VerifyAnalyzerAsync(testCode);
     }
 
+    [Fact]
+    public async Task UnderscoreVariable_InArgument_NoDiagnostic()
+    {
+        var testCode = @"
+public class Test
+{
+    private static int Read(in int value) => value;
+
+    public int Method()
+    {
+        int _x = 10;
+        return Read(in _x);
+    }
+}";
+        await VerifyCS.VerifyAnalyzerAsync(testCode);
+    }
+
     // =========================================================
     // 異常系: LVP0001 - 再代入禁止
     // =========================================================
@@ -120,6 +137,40 @@ public class Test
     {
         int _x = 10;
         {|LVP0001:_x++|};
+    }
+}";
+        await VerifyCS.VerifyAnalyzerAsync(testCode);
+    }
+
+    [Fact]
+    public async Task UnderscoreVariable_RefArgument_ReportsError()
+    {
+        var testCode = @"
+public class Test
+{
+    private static void Mutate(ref int value) => value++;
+
+    public void Method()
+    {
+        int _x = 10;
+        Mutate({|LVP0001:ref _x|});
+    }
+}";
+        await VerifyCS.VerifyAnalyzerAsync(testCode);
+    }
+
+    [Fact]
+    public async Task UnderscoreVariable_OutArgument_ReportsError()
+    {
+        var testCode = @"
+public class Test
+{
+    private static void Assign(out int value) => value = 42;
+
+    public void Method()
+    {
+        int _x = 10;
+        Assign({|LVP0001:out _x|});
     }
 }";
         await VerifyCS.VerifyAnalyzerAsync(testCode);
