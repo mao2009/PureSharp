@@ -4,6 +4,12 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
+if [[ -n "$(git status --porcelain --untracked-files=all)" ]]; then
+  echo "Release verification must start from a clean working tree." >&2
+  git status --short >&2
+  exit 1
+fi
+
 expected_version="${1:-}"
 version="$(sed -n 's:.*<Version>\([^<]*\)</Version>.*:\1:p' Directory.Build.props | head -n1)"
 
