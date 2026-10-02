@@ -63,7 +63,7 @@ using PureSharp.Core;
 
 internal static class Program
 {
-    private static int Counter;
+    private static int Counter = 1;
 
     [PureMethod]
     private static int ReadCounter() => Counter;
