@@ -136,6 +136,9 @@ jobs:
       - name: Push NuGet package
         run: dotnet nuget push "out/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
+      - name: Verify published package from NuGet.org
+        run: bash scripts/verify-published-package.sh "${GITHUB_REF_NAME#v}"
+
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
