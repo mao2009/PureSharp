@@ -2,7 +2,7 @@
 
 All notable PureSharp release-line changes are recorded here. Diagnostic compatibility is governed by [`docs/DIAGNOSTICS.md`](docs/DIAGNOSTICS.md).
 
-## [1.0.0] - Unreleased
+## [1.0.0] - 2026-10-02
 
 ### Added
 
