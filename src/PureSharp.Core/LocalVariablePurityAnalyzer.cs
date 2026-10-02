@@ -48,6 +48,7 @@ public class LocalVariablePurityAnalyzer : DiagnosticAnalyzer
         context.RegisterOperationAction(AnalyzeCompoundAssignment, OperationKind.CompoundAssignment);
         context.RegisterOperationAction(AnalyzeIncrement, OperationKind.Increment);
         context.RegisterOperationAction(AnalyzeDecrement, OperationKind.Decrement);
+        context.RegisterOperationAction(AnalyzeArgument, OperationKind.Argument);
     }
 
     private static void AnalyzeVariableDeclarator(OperationAnalysisContext context)
@@ -82,11 +83,26 @@ public class LocalVariablePurityAnalyzer : DiagnosticAnalyzer
         ReportIfReassignment(context, context.Operation);
     }
 
+    private static void AnalyzeArgument(OperationAnalysisContext context)
+    {
+        var argument = (IArgumentOperation)context.Operation;
+        if (argument.Parameter?.RefKind is not (RefKind.Ref or RefKind.Out))
+            return;
+
+        if (argument.Value is not ILocalReferenceOperation localReference ||
+            !PurityRulesEngine.IsPureLocalVariable(localReference.Local))
+            return;
+
+        context.ReportDiagnostic(Diagnostic.Create(
+            LVP0001,
+            argument.Syntax.GetLocation(),
+            localReference.Local.Name));
+    }
+
     private static void ReportIfReassignment(OperationAnalysisContext context, IOperation op)
     {
         if (PurityRulesEngine.IsReassignmentToPureLocal(op))
         {
-            // 代入先（Target）のシンボル名を取得
             string localName = "unknown";
             if (op is IAssignmentOperation assignment && assignment.Target is ILocalReferenceOperation lr1)
                 localName = lr1.Local.Name;
