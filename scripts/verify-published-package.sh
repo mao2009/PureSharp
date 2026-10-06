@@ -42,18 +42,23 @@ EOF
 export NUGET_PACKAGES="$work/packages"
 pushd "$work" >/dev/null
 
+max_attempts=30
+retry_delay_seconds=20
 restored=false
-for attempt in $(seq 1 12); do
+for attempt in $(seq 1 "$max_attempts"); do
   if dotnet restore --configfile NuGet.Config --no-cache --force; then
     restored=true
     break
   fi
-  echo "Published package $version is not available from nuget.org yet (attempt $attempt/12)." >&2
-  sleep 10
+
+  echo "Published package $version is not available from nuget.org yet (attempt $attempt/$max_attempts)." >&2
+  if (( attempt < max_attempts )); then
+    sleep "$retry_delay_seconds"
+  fi
 done
 
 if [[ "$restored" != true ]]; then
-  echo "Could not restore loach.PureSharp $version from nuget.org." >&2
+  echo "Could not restore loach.PureSharp $version from nuget.org after $max_attempts attempts." >&2
   exit 1
 fi
 
