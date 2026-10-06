@@ -154,6 +154,23 @@ public class Test
     }
 
     [Fact]
+    public async Task TypedTupleDeconstructionDeclaration_NoDiagnostic()
+    {
+        var testCode = @"
+public class Test
+{
+    private static (int, int) F() => (1, 2);
+
+    public void Method()
+    {
+        (int _a, int _b) = F();
+        System.Console.WriteLine(_a + _b);
+    }
+}";
+        await VerifyCS.VerifyAnalyzerAsync(testCode);
+    }
+
+    [Fact]
     public async Task UnderscoreVariable_SimpleAssignment_ReportsError()
     {
         var testCode = @"
