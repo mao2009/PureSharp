@@ -136,6 +136,7 @@ public class LocalVariablePurityAnalyzer : DiagnosticAnalyzer
         foreach (var operation in target.DescendantsAndSelf())
         {
             if (operation is ILocalReferenceOperation localReference &&
+                !HasAncestor<IDeclarationExpressionOperation>(localReference) &&
                 PurityRulesEngine.IsPureLocalVariable(localReference.Local))
             {
                 context.ReportDiagnostic(Diagnostic.Create(
