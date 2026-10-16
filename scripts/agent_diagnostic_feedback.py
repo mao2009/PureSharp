@@ -95,7 +95,7 @@ def run_check(
     if strict:
         governed = guard_project or project
         wiring = verify_participation(
-            root, governed, "loach.PureSharp", null,
+            root, governed, "loach.PureSharp", None,
             internal_cli=(backend == "policysharp"), dotnet=dotnet, executor=executor,
             timeout=timeout,
         )
