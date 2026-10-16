@@ -299,7 +299,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--root", type=Path, default=Path("."))
     parser.add_argument("--project", type=Path, help="Governed .csproj for MSBuild participation check")
     parser.add_argument("--analyzer", default="loach.PureSharp", help="Required analyzer reference")
-    parser.add_argument("--additional-file", default=null, help="Required AdditionalFiles input")
+    parser.add_argument("--additional-file", default=None, help="Required AdditionalFiles input")
     parser.add_argument("--ids", action="append", help="Override protected diagnostic IDs (comma separated)")
     parser.add_argument("--exclude", action="append", default=[], help="Explicit reviewed glob exclusion")
     parser.add_argument("--require-file", action="append", default=[], help="Required input path relative to root")
