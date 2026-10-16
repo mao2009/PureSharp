@@ -1,0 +1,9 @@
+# PureSharp analyzer / pipeline integrity.
+# Owner-only CODEOWNERS does not supply an independent review for owner PRs.
+/.github/workflows/ @mao2009
+/.github/CODEOWNERS @mao2009
+/src/ @mao2009
+/scripts/ @mao2009
+/tests/agent_guard/ @mao2009
+/Directory.Build.* @mao2009
+/Directory.Packages.props @mao2009
