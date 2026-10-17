@@ -1,5 +1,5 @@
 # PureSharp analyzer / pipeline integrity.
-# Owner-only CODEOWNERS does not supply an independent review for owner PRs.
+# Solo maintainer: CODEOWNERS is documentary, not self-review approval.
 /.github/workflows/ @mao2009
 /.github/CODEOWNERS @mao2009
 /src/ @mao2009
